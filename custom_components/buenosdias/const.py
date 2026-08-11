@@ -1,0 +1,48 @@
+"""Constantes de la integración buenosdias."""
+
+DOMAIN = "buenosdias"
+VERSION = "0.1.0"
+
+CONF_LLM = "llm"
+CONF_TTS = "tts"
+CONF_SOURCES = "sources"
+CONF_SCHEDULE = "schedule"
+CONF_PERSONA = "persona"
+
+CONF_MODE = "mode"
+CONF_AGENT = "agent"
+CONF_MAX_CHARS = "max_chars"
+CONF_OPENAI = "openai"
+CONF_BASE_URL = "base_url"
+CONF_API_KEY = "api_key"
+CONF_MODEL = "model"
+
+CONF_ENTITY_ID = "entity_id"
+CONF_MEDIA_PLAYER = "media_player"
+CONF_LANGUAGE = "language"
+CONF_VOLUME = "volume"
+CONF_RESTORE_VOLUME = "restore_volume"
+
+CONF_WEATHER = "weather"
+CONF_CALENDAR = "calendar"
+CONF_SENSORS = "sensors"
+
+CONF_RSS = "rss"
+CONF_FEEDS = "feeds"
+CONF_URL = "url"
+CONF_KIND = "kind"
+CONF_MAX_AGE_HOURS = "max_age_hours"
+CONF_MAX_ITEMS = "max_items"
+CONF_TAGS = "tags"
+
+KIND_NEWS = "news"
+KIND_EVENTS = "events"
+
+CONF_TIME = "time"
+CONF_TIME_ENTITY = "time_entity"
+CONF_SKIP_DAYS = "skip_days"
+CONF_FERIADOS = "feriados"
+CONF_SKIP_IF_EMITTED = "skip_if_emitted"
+
+MODE_HA_CONVERSATION = "ha_conversation"
+MODE_OPENAI_COMPATIBLE = "openai_compatible"

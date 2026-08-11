@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "homeassistant-custom-components-buenosdias"
+version = "0.1.0"
+description = "Radio matutina personalizada para Home Assistant con LLM"
+requires-python = ">=3.13"
+license = { text = "Apache-2.0" }
+dependencies = [
+  "feedparser",
+  "httpx",
+]
+
+[tool.setuptools]
+packages = ["custom_components", "custom_components.buenosdias"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"

@@ -1,0 +1,56 @@
+# Ejemplo de configuración para la integración "buenosdias".
+# Copia este bloque a tu configuration.yaml (o a services.home-assistant.config en NixOS).
+
+buenosdias:
+  llm:
+    # ha_conversation (usar el agente de conversación de HA) | openai_compatible (endpoint tipo OpenAI)
+    mode: ha_conversation
+    # agent: <entity_id del agente de conversación>   # opcional, solo mode: ha_conversation
+    max_chars: 2000
+    # Fallback / mode openai_compatible (Ollama, OpenRouter, Groq, LM Studio...):
+    openai:
+      base_url: http://localhost:11434/v1
+      api_key: !secret buenosdias_llm_api_key
+      model: llama3
+
+  tts:
+    entity_id: tts.piper
+    media_player: media_player.sala
+    language: es-ES
+    volume: 0.6
+    restore_volume: true
+
+  sources:
+    weather:
+      - weather.casa
+    calendar:
+      - calendar.familia
+    sensors:
+      - sensor.consumo_diario
+    # Feeds RSS opcionales: noticias y eventos de la ciudad.
+    rss:
+      feeds:
+        - url: https://www.ejemplo.org/noticias/rss.xml
+          kind: news          # news | events
+          max_age_hours: 24
+          max_items: 5
+          tags: [ciudad, actualidad]
+        - url: https://www.ejemplo.org/agenda/rss.xml
+          kind: events
+          max_age_hours: 168
+          max_items: 8
+
+  schedule:
+    # time fija: "07:00". Alternativa dinámica: time_entity lee la próxima alarma
+    # de una entidad (p. ej. el sensor de alarma de la app del teléfono) y la
+    # alarma se re-registra al cambiar su estado.
+    time: "07:00"
+    # time_entity: sensor.alarma_telefono
+    skip_days: [sat, sun]
+    feriados:
+      - "2026-01-01"
+    skip_if_emitted: true
+
+  persona: |
+    Eres el locutor de una radio matutina. Habla en español de España, con
+    tono cercano y natural. Redacta un breve guion hablado.

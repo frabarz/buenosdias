@@ -1,0 +1,12 @@
+{
+  "domain": "buenosdias",
+  "name": "Buenos Días",
+  "codeowners": ["@francisco"],
+  "config_flow": false,
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "version": "0.1.0",
+  "homeassistant": "2025.2.0",
+  "requirements": ["feedparser", "httpx"],
+  "loggers": ["custom_components.buenosdias"]
+}
