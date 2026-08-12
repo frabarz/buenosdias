@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
-from .state import StateStore
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+
+    from .state import StateStore
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -18,7 +18,6 @@ from .const import (
     CONF_MODEL,
     CONF_OPENAI,
     MODE_HA_CONVERSATION,
-    MODE_OPENAI_COMPATIBLE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -66,12 +65,14 @@ class HAConversationLLM(LLMClient):
                 extra_system_prompt=system,  # type: ignore[call-arg]
             )
         except Exception as err:
-            raise LLMError(f"agente de conversación falló: {err}") from err
+            msg = f"agente de conversación falló: {err}"
+            raise LLMError(msg) from err
 
         speech: dict = (result.response.speech or {}).get("plain") or {}
         text = speech.get("speech", "")
         if not text:
-            raise LLMError("el agente de conversación no devolvió texto")
+            msg = "el agente de conversación no devolvió texto"
+            raise LLMError(msg)
         return text
 
 
@@ -104,18 +105,21 @@ class OpenAICompatLLM(LLMClient):
         url = f"{self._base_url}{CHAT_COMPLETIONS_PATH}"
         try:
             async with httpx.AsyncClient(
-                timeout=httpx.Timeout(DEFAULT_TIMEOUT), transport=self._transport
+                timeout=httpx.Timeout(DEFAULT_TIMEOUT),
+                transport=self._transport,
             ) as client:
                 response = await client.post(url, headers=headers, json=payload)
                 response.raise_for_status()
                 data = response.json()
         except Exception as err:
-            raise LLMError(f"endpoint OpenAI falló: {err}") from err
+            msg = f"endpoint OpenAI falló: {err}"
+            raise LLMError(msg) from err
 
         try:
             return data["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as err:
-            raise LLMError(f"respuesta OpenAI inválida: {data}") from err
+            msg = f"respuesta OpenAI inválida: {data}"
+            raise LLMError(msg) from err
 
 
 class FallbackLLM(LLMClient):

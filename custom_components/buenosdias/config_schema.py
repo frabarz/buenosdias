@@ -56,7 +56,8 @@ def _entity_list() -> vol.All:
 OPENAI_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_BASE_URL, default="http://localhost:11434/v1"): vol.All(
-            str, vol.Length(min=1)
+            str,
+            vol.Length(min=1),
         ),
         vol.Optional(CONF_API_KEY, default=""): str,
         vol.Optional(CONF_MODEL, default="llama3"): vol.All(str, vol.Length(min=1)),
@@ -67,11 +68,12 @@ OPENAI_SCHEMA = vol.Schema(
 LLM_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_MODE, default=MODE_HA_CONVERSATION): vol.In(
-            [MODE_HA_CONVERSATION, MODE_OPENAI_COMPATIBLE]
+            [MODE_HA_CONVERSATION, MODE_OPENAI_COMPATIBLE],
         ),
         vol.Optional(CONF_AGENT, default=""): str,
         vol.Optional(CONF_MAX_CHARS, default=2000): vol.All(
-            vol.Coerce(int), vol.Range(min=100, max=20000)
+            vol.Coerce(int),
+            vol.Range(min=100, max=20000),
         ),
         vol.Optional(CONF_OPENAI, default={}): vol.All(dict, OPENAI_SCHEMA),
     },
@@ -83,10 +85,12 @@ TTS_SCHEMA = vol.Schema(
         vol.Optional(CONF_ENTITY_ID, default=""): str,
         vol.Optional(CONF_MEDIA_PLAYER, default=""): str,
         vol.Optional(CONF_LANGUAGE, default="es-ES"): vol.All(
-            str, vol.Length(min=2)
+            str,
+            vol.Length(min=2),
         ),
         vol.Optional(CONF_VOLUME, default=0.6): vol.All(
-            vol.Coerce(float), vol.Range(min=0.0, max=1.0)
+            vol.Coerce(float),
+            vol.Range(min=0.0, max=1.0),
         ),
         vol.Optional(CONF_RESTORE_VOLUME, default=True): bool,
     },
@@ -100,13 +104,15 @@ RSS_FEED_SCHEMA = vol.Schema(
         vol.Required(CONF_URL): vol.All(str, vol.Length(min=1)),
         vol.Optional(CONF_KIND, default=KIND_NEWS): vol.In(KIND_VALUES),
         vol.Optional(CONF_MAX_AGE_HOURS, default=72): vol.All(
-            vol.Coerce(int), vol.Range(min=1)
+            vol.Coerce(int),
+            vol.Range(min=1),
         ),
         vol.Optional(CONF_MAX_ITEMS, default=5): vol.All(
-            vol.Coerce(int), vol.Range(min=1, max=50)
+            vol.Coerce(int),
+            vol.Range(min=1, max=50),
         ),
         vol.Optional(CONF_TAGS, default=[]): vol.All(
-            [vol.All(str, vol.Length(min=1))]
+            [vol.All(str, vol.Length(min=1))],
         ),
     },
     extra=vol.ALLOW_EXTRA,
@@ -115,7 +121,7 @@ RSS_FEED_SCHEMA = vol.Schema(
 RSS_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_FEEDS, default=[]): vol.All(
-            [vol.All(dict, RSS_FEED_SCHEMA)]
+            [vol.All(dict, RSS_FEED_SCHEMA)],
         ),
     },
     extra=vol.ALLOW_EXTRA,
@@ -135,10 +141,11 @@ SCHEDULE_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_TIME, default="07:00"): vol.Match(TIME_RE),
         vol.Optional(CONF_TIME_ENTITY, default=""): vol.All(
-            str, vol.Length(min=0)
+            str,
+            vol.Length(min=0),
         ),
         vol.Optional(CONF_SKIP_DAYS, default=[]): vol.All(
-            [vol.In(WEEKDAY_VALUES)]
+            [vol.In(WEEKDAY_VALUES)],
         ),
         vol.Optional(CONF_FERIADOS, default=[]): vol.All([vol.Match(DATE_RE)]),
         vol.Optional(CONF_SKIP_IF_EMITTED, default=True): bool,
@@ -158,5 +165,6 @@ BUENOSDIAS_SCHEMA = vol.Schema(
 )
 
 CONFIG_SCHEMA = vol.Schema(
-    {vol.Optional(DOMAIN): BUENOSDIAS_SCHEMA}, extra=vol.ALLOW_EXTRA
+    {vol.Optional(DOMAIN): BUENOSDIAS_SCHEMA},
+    extra=vol.ALLOW_EXTRA,
 )

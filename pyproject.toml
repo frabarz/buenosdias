@@ -3,15 +3,22 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "homeassistant-custom-components-buenosdias"
+name = "hass-buenosdias"
 version = "0.1.0"
-description = "Radio matutina personalizada para Home Assistant con LLM"
+description = "Radio matutina personalizada para Home Assistant"
 requires-python = ">=3.13"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+authors = [
+  {name = "Francisco Abarzua", email = "pypi.dev@frabarz.cl"},
+]
 dependencies = [
   "feedparser",
   "httpx",
 ]
+
+[project.urls]
+Repository = "https://tangled.org/frabarz.cl/buenosdias"
+Issues = "https://tangled.org/frabarz.cl/buenosdias/issues"
 
 [tool.setuptools]
 packages = ["custom_components", "custom_components.buenosdias"]
@@ -20,3 +27,6 @@ packages = ["custom_components", "custom_components.buenosdias"]
 testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
+
+[tool.ruff.lint]
+ignore = ["ARG001"]

@@ -10,8 +10,8 @@ from homeassistant.helpers import discovery
 from homeassistant.util import dt as dt_util
 
 from . import coordinator, scheduler, sources
-from .const import DOMAIN
 from .config_schema import CONFIG_SCHEMA  # noqa: F401  (expuesto para HA)
+from .const import DOMAIN
 from .state import StateStore
 
 _LOGGER = logging.getLogger(__name__)
@@ -91,7 +91,9 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             _LOGGER.warning("Alarma buenos días falló: %s", err)
             result = f"error: {err}"
         await store.async_mark_emitted(
-            local_today.isoformat(), result, next_alarm=next_alarm
+            local_today.isoformat(),
+            result,
+            next_alarm=next_alarm,
         )
         for entity in entry["entities"]:
             refresh = getattr(entity, "refresh_from_store", None)

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from homeassistant.core import HomeAssistant
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 DEFAULT_STORE_KEY = "buenosdias.state"
 
@@ -52,7 +53,10 @@ class StateStore:
                 self._data[key] = loaded.get(key) or None
 
     async def async_mark_emitted(
-        self, date_str: str, result: str = "ok", next_alarm: str | None = None
+        self,
+        date_str: str,
+        result: str = "ok",
+        next_alarm: str | None = None,
     ) -> None:
         """Registra una emisión y persiste el estado."""
         self._data["last_emission_date"] = date_str

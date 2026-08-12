@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
-
-from homeassistant.core import HomeAssistant
+from typing import TYPE_CHECKING
 
 from .const import (
     CONF_ENTITY_ID,
@@ -15,6 +13,9 @@ from .const import (
     CONF_TTS,
     CONF_VOLUME,
 )
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,13 +36,17 @@ def media_player_volume(hass: HomeAssistant, entity_id: str) -> float | None:
 
 
 async def _call(
-    hass: HomeAssistant, domain: str, service: str, data: dict
+    hass: HomeAssistant,
+    domain: str,
+    service: str,
+    data: dict,
 ) -> None:
     """Invoca un servicio de HA en bloque, traduciendo errores a SpeakError."""
     try:
         await hass.services.async_call(domain, service, data, blocking=True)
     except Exception as err:
-        raise SpeakError(f"{domain}.{service} falló: {err}") from err
+        msg = f"{domain}.{service} falló: {err}"
+        raise SpeakError(msg) from err
 
 
 async def async_speak(hass: HomeAssistant, config: dict, text: str) -> None:
@@ -50,7 +55,8 @@ async def async_speak(hass: HomeAssistant, config: dict, text: str) -> None:
     tts_entity = tts_cfg.get(CONF_ENTITY_ID)
     media_player = tts_cfg.get(CONF_MEDIA_PLAYER)
     if not tts_entity or not media_player:
-        raise SpeakError("tts.entity_id y tts.media_player son obligatorios")
+        msg = "tts.entity_id y tts.media_player son obligatorios"
+        raise SpeakError(msg)
 
     language = tts_cfg.get(CONF_LANGUAGE, DEFAULT_LANGUAGE)
     volume = tts_cfg.get(CONF_VOLUME, DEFAULT_VOLUME)

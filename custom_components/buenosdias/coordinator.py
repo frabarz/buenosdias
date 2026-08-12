@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
-
-from homeassistant.core import HomeAssistant
+from typing import TYPE_CHECKING
 
 from . import script, sources
 from .speak import SpeakError, async_speak
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +19,9 @@ class PipelineError(Exception):
 
 
 async def async_run(
-    hass: HomeAssistant, config: dict, emit: bool = True
+    hass: HomeAssistant,
+    config: dict,
+    emit: bool = True,
 ) -> dict:
     """Ejecuta el pipeline: contexto → guion → TTS.
 
@@ -28,12 +31,14 @@ async def async_run(
     try:
         script_text = await script.async_generate_script(hass, config, context)
     except Exception as err:
-        raise PipelineError(f"generación del guion falló: {err}") from err
+        msg = f"generación del guion falló: {err}"
+        raise PipelineError(msg) from err
 
     if emit:
         try:
             await async_speak(hass, config, script_text)
         except SpeakError as err:
-            raise PipelineError(f"emisión del guion falló: {err}") from err
+            msg = f"emisión del guion falló: {err}"
+            raise PipelineError(msg) from err
 
     return {"script": script_text, "context": context}

@@ -16,7 +16,8 @@ DEFAULT_MAX_CHARS = 2000
 MAX_ATTEMPTS = 2
 
 MARKDOWN_BLOCK_RE = re.compile(
-    r"```|(^|\n)#{1,6}\s|(\*\*|__)|(^|\n)\s*[-*]\s", re.MULTILINE
+    r"```|(^|\n)#{1,6}\s|(\*\*|__)|(^|\n)\s*[-*]\s",
+    re.MULTILINE,
 )
 
 
@@ -24,16 +25,22 @@ def validate_script(text: str, max_chars: int) -> str:
     """Valida y normaliza el guion generado."""
     text = (text or "").strip()
     if not text:
-        raise ValueError("guion vacío")
+        msg = "guion vacío"
+        raise ValueError(msg)
     if len(text) > max_chars:
-        raise ValueError(f"guion demasiado largo ({len(text)} > {max_chars})")
+        msg = f"guion demasiado largo ({len(text)} > {max_chars})"
+        raise ValueError(msg)
     if MARKDOWN_BLOCK_RE.search(text):
-        raise ValueError("el guion contiene bloques markdown")
+        msg = "el guion contiene bloques markdown"
+        raise ValueError(msg)
     return text
 
 
 async def async_generate_script(
-    hass: Any, config: dict, context: dict, llm: LLMClient | None = None
+    hass: Any,
+    config: dict,
+    context: dict,
+    llm: LLMClient | None = None,
 ) -> str:
     """Genera el guion del buenos días con un reintento único."""
     llm_cfg = config.get(CONF_LLM, {})
@@ -46,9 +53,11 @@ async def async_generate_script(
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             return validate_script(
-                await client.async_complete(system, user), max_chars
+                await client.async_complete(system, user),
+                max_chars,
             )
         except (LLMError, ValueError) as err:
             last_error = err
             _LOGGER.warning("Intento %s de generación falló: %s", attempt, err)
-    raise LLMError(f"generación de guion falló: {last_error}")
+    msg = f"generación de guion falló: {last_error}"
+    raise LLMError(msg)

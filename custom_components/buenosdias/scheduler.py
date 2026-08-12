@@ -5,9 +5,8 @@ from __future__ import annotations
 import logging
 import re
 from datetime import date, datetime, time, timedelta
-from typing import Any, Callable
+from typing import TYPE_CHECKING
 
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers import event as ha_event
 from homeassistant.util import dt as dt_util
 
@@ -19,6 +18,11 @@ from .const import (
     CONF_TIME,
     CONF_TIME_ENTITY,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,7 +53,8 @@ def parse_time(value: str | datetime) -> tuple[int, int]:
     else:
         parsed = dt_util.parse_datetime(value)
         if parsed is None:
-            raise ValueError(f"Hora de alarma inválida: {value!r}")
+            msg = f"Hora de alarma inválida: {value!r}"
+            raise ValueError(msg)
         if parsed.tzinfo is not None:
             parsed = dt_util.as_local(parsed)
         hour, minute = parsed.hour, parsed.minute
@@ -67,7 +72,8 @@ def read_alarm_time(hass: HomeAssistant, config: dict) -> tuple[int, int] | None
         state = hass.states.get(time_entity)
         if state is None or state.state in ("", "unavailable", "unknown", "none"):
             _LOGGER.warning(
-                "time_entity %s no disponible; alarma desactivada", time_entity
+                "time_entity %s no disponible; alarma desactivada",
+                time_entity,
             )
             return None
         try:
@@ -85,10 +91,7 @@ def _day_allowed(day: date, schedule: dict) -> bool:
         return False
 
     feriados = schedule.get(CONF_FERIADOS, [])
-    if day.isoformat() in feriados:
-        return False
-
-    return True
+    return day.isoformat() not in feriados
 
 
 def should_fire(
@@ -103,10 +106,10 @@ def should_fire(
     if not _day_allowed(today, schedule):
         return False
 
-    if schedule.get(CONF_SKIP_IF_EMITTED, True) and last_emitted_date == today.isoformat():
-        return False
-
-    return True
+    return not (
+        schedule.get(CONF_SKIP_IF_EMITTED, True)
+        and last_emitted_date == today.isoformat()
+    )
 
 
 def next_fire_time(
@@ -124,7 +127,7 @@ def next_fire_time(
     skip_if_emitted = schedule.get(CONF_SKIP_IF_EMITTED, True)
     today = local_now.date()
 
-    for offset in range(0, max_days):
+    for offset in range(max_days):
         day = today + timedelta(days=offset)
         if not _day_allowed(day, schedule):
             continue
@@ -157,7 +160,11 @@ def async_setup_scheduler(
             return None
         hour, minute = alarm
         return ha_event.async_track_utc_time_change(
-            hass, callback, hour=hour, minute=minute, second=0
+            hass,
+            callback,
+            hour=hour,
+            minute=minute,
+            second=0,
         )
 
     unsub_time = _arm()
@@ -172,7 +179,9 @@ def async_setup_scheduler(
             unsub_time = _arm()
 
         unsub_state = ha_event.async_track_state_change_event(
-            hass, [time_entity], async_on_state_change
+            hass,
+            [time_entity],
+            async_on_state_change,
         )
 
     def async_unsub() -> None:

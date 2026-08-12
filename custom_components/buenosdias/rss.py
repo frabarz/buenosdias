@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import feedparser
@@ -43,8 +43,13 @@ def _entry_published(entry: Any) -> datetime | None:
             continue
         try:
             return datetime(
-                struct[0], struct[1], struct[2], struct[3], struct[4], struct[5],
-                tzinfo=timezone.utc,
+                struct[0],
+                struct[1],
+                struct[2],
+                struct[3],
+                struct[4],
+                struct[5],
+                tzinfo=UTC,
             )
         except (TypeError, ValueError):
             continue
@@ -70,13 +75,14 @@ def parse_feed_content(content: bytes, feed: dict) -> list[dict]:
     """Parsea un feed, filtra por antigüedad y deduplica por título normalizado."""
     parsed: Any = feedparser.parse(content)
     if parsed.bozo and not parsed.entries:
-        raise ValueError(f"feed inválido: {parsed.get('bozo_exception')}")
+        msg = f"feed inválido: {parsed.get('bozo_exception')}"
+        raise ValueError(msg)
 
     max_age_hours = feed.get(CONF_MAX_AGE_HOURS, DEFAULT_MAX_AGE_HOURS)
     max_items = feed.get(CONF_MAX_ITEMS, DEFAULT_MAX_ITEMS)
     tags = feed.get(CONF_TAGS, [])
     feed_title = parsed.feed.get("title") if parsed.feed else None
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     seen: set[str] = set()
     items: list[dict] = []
@@ -106,7 +112,9 @@ async def _fetch_one(client: httpx.AsyncClient, feed: dict) -> list[dict]:
 
 
 async def async_fetch_feeds(
-    hass: Any, feeds: list[dict], client: httpx.AsyncClient | None = None
+    hass: Any,
+    feeds: list[dict],
+    client: httpx.AsyncClient | None = None,
 ) -> dict:
     """Recolecta las secciones news y events desde los feeds configurados.
 

@@ -5,10 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 
-DEFAULT_PERSONA = (
-    "Eres el locutor de una radio matutina en español de España, "
-    "cercano y natural."
-)
+DEFAULT_PERSONA = "Eres el locutor de una radio matutina en español latinoamericano, cercano y natural."
 
 
 def build_system_prompt(persona: str) -> str:

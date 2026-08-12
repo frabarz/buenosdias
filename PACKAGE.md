@@ -25,15 +25,15 @@ alarma hablada, sin servicios externos.
 ### Manual (HACS / custom_components)
 
 ```sh
-git clone <repo> buenosdias
-cp -r buenosdias/custom_components/buenosdias <config>/custom_components/
+git clone https://tangled.org/frabarz.cl/buenosdias buenosdias
+cp -r buenosdias/custom_components/buenosdias <hass_config>/custom_components/
 ```
 
 ### NixOS (flake)
 
 ```nix
 {
-  inputs.buenosdias.url = "github:<usuario>/buenosdias";
+  inputs.buenosdias.url = "git+https://tangled.org/frabarz.cl/buenosdias.git";
   outputs = { self, nixpkgs, buenosdias, ... }:
     let system = "x86_64-linux"; in {
       nixosConfigurations.mi = nixpkgs.lib.nixosSystem {
