@@ -1,4 +1,4 @@
-"""Tests de la generación y validación del guion."""
+"""Tests of the script generation and validation."""
 
 import asyncio
 
@@ -23,62 +23,62 @@ def _run(coro):
 
 
 def test_validate_script_ok():
-    assert script.validate_script("  Buenos días.  ", 2000) == "Buenos días."
+    assert script.validate_script("  Good morning.  ", 2000) == "Good morning."
 
 
-def test_validate_script_vacio():
+def test_validate_script_empty():
     with pytest.raises(ValueError):
         script.validate_script("   ", 2000)
 
 
-def test_validate_script_demasiado_largo():
+def test_validate_script_too_long():
     with pytest.raises(ValueError):
         script.validate_script("a" * 100, max_chars=50)
 
 
 @pytest.mark.parametrize(
     "bad",
-    ["```codigo```", "# Título", "**negrita**", "__cursiva__", "- lista"],
+    ["```code```", "# Title", "**bold**", "__italic__", "- list"],
 )
-def test_validate_script_rechaza_markdown(bad):
+def test_validate_script_rejects_markdown(bad):
     with pytest.raises(ValueError):
         script.validate_script(bad, 2000)
 
 
-def test_async_generate_script_devuelve_texto():
-    llm = _FixedLLM("Buenos días, hace sol.")
+def test_async_generate_script_returns_text():
+    llm = _FixedLLM("Good morning, it is sunny.")
     out = _run(script.async_generate_script(None, {}, {"weather": {}}, llm=llm))
-    assert out == "Buenos días, hace sol."
+    assert out == "Good morning, it is sunny."
     assert llm.calls == 1
 
 
-def test_async_generate_script_reintenta_y_agota():
+def test_async_generate_script_retries_and_exhausts():
     llm = _FixedLLM("```markdown```")
     with pytest.raises(LLMError):
         _run(script.async_generate_script(None, {}, {}, llm=llm))
     assert llm.calls == script.MAX_ATTEMPTS
 
 
-def test_async_generate_script_aplica_max_chars():
+def test_async_generate_script_applies_max_chars():
     llm = _FixedLLM("a" * 500)
     config = {script.CONF_LLM: {script.CONF_MAX_CHARS: 100}}
     with pytest.raises(LLMError):
         _run(script.async_generate_script(None, config, {}, llm=llm))
 
 
-def test_build_user_prompt_serializa_contexto():
+def test_build_user_prompt_serializes_context():
     context = {"weather": {"weather.casa": {"state": "sunny"}}}
     user = prompts.build_user_prompt(context)
     assert "weather.casa" in user
     assert "sunny" in user
 
 
-def test_build_system_prompt_incluye_normas():
+def test_build_system_prompt_includes_rules():
     system = prompts.build_system_prompt("")
     assert "markdown" in system
-    assert "texto hablado" in system
+    assert "spoken text" in system
 
 
-def test_build_system_prompt_usa_persona():
-    system = prompts.build_system_prompt("Eres un radiofonista muy serio.")
-    assert "radiofonista" in system
+def test_build_system_prompt_uses_persona():
+    system = prompts.build_system_prompt("You are a very serious radio host.")
+    assert "radio host" in system

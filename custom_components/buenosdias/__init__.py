@@ -1,4 +1,4 @@
-"""Integración buenosdias: radio matutina personalizada con LLM."""
+"""buenosdias integration: personalized morning radio with LLM."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from homeassistant.helpers import discovery
 from homeassistant.util import dt as dt_util
 
 from . import coordinator, scheduler, sources
-from .config_schema import CONFIG_SCHEMA  # noqa: F401  (expuesto para HA)
+from .config_schema import CONFIG_SCHEMA  # noqa: F401  (exposed to HA)
 from .const import DOMAIN
 from .state import StateStore
 
@@ -22,7 +22,7 @@ SERVICE_EMIT = "emit"
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Configura la integración buenosdias."""
+    """Set up the buenosdias integration."""
     conf = config.get(DOMAIN, {})
     store = StateStore(hass)
     await store.async_load()
@@ -34,16 +34,16 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     }
 
     async def async_handle_context(call: ServiceCall) -> dict[str, Any]:
-        """Devuelve el contexto matutino recolectado (JSON)."""
+        """Return the collected morning context (JSON)."""
         return await sources.async_gather_context(hass, conf)
 
     async def async_handle_generate(call: ServiceCall) -> dict[str, Any]:
-        """Genera el guion del buenos días (dry-run) y lo devuelve."""
+        """Generate the good-morning script (dry-run) and return it."""
         result = await coordinator.async_run(hass, conf, emit=False)
         return {"script": result["script"]}
 
     async def async_handle_emit(call: ServiceCall) -> dict[str, Any]:
-        """Ejecuta el pipeline completo y emite el guion por TTS."""
+        """Run the full pipeline and play the script via TTS."""
         result = await coordinator.async_run(hass, conf)
         return {"script": result["script"]}
 
@@ -67,7 +67,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     )
 
     async def async_on_alarm(now) -> None:
-        """Dispara la alarma diaria si corresponde."""
+        """Fire the daily alarm when it is due."""
         entry = hass.data[DOMAIN]
         if not entry["enabled"]:
             return
@@ -88,7 +88,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             await coordinator.async_run(hass, conf)
             result = "ok"
         except coordinator.PipelineError as err:
-            _LOGGER.warning("Alarma buenos días falló: %s", err)
+            _LOGGER.warning("buenosdias alarm failed: %s", err)
             result = f"error: {err}"
         await store.async_mark_emitted(
             local_today.isoformat(),

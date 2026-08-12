@@ -1,11 +1,11 @@
-# Ejemplo de configuración para la integración "buenosdias".
-# Copia este bloque a tu configuration.yaml (o a services.home-assistant.config en NixOS).
+# Example configuration for the "buenosdias" integration.
+# Copy this block into your configuration.yaml (or services.home-assistant.config on NixOS).
 
 buenosdias:
   llm:
-    # ha_conversation (usar el agente de conversación de HA) | openai_compatible (endpoint tipo OpenAI)
+    # ha_conversation (use HA's conversation agent) | openai_compatible (OpenAI-style endpoint)
     mode: ha_conversation
-    # agent: <entity_id del agente de conversación>   # opcional, solo mode: ha_conversation
+    # agent: <conversation agent entity_id>   # optional, only for mode: ha_conversation
     max_chars: 2000
     # Fallback / mode openai_compatible (Ollama, OpenRouter, Groq, LM Studio...):
     openai:
@@ -27,23 +27,23 @@ buenosdias:
       - calendar.familia
     sensors:
       - sensor.consumo_diario
-    # Feeds RSS opcionales: noticias y eventos de la ciudad.
+    # Optional RSS feeds: city news and events.
     rss:
       feeds:
-        - url: https://www.ejemplo.org/noticias/rss.xml
+        - url: https://www.example.org/news/rss.xml
           kind: news          # news | events
           max_age_hours: 24
           max_items: 5
-          tags: [ciudad, actualidad]
-        - url: https://www.ejemplo.org/agenda/rss.xml
+          tags: [city, current]
+        - url: https://www.example.org/events/rss.xml
           kind: events
           max_age_hours: 168
           max_items: 8
 
   schedule:
-    # time fija: "07:00". Alternativa dinámica: time_entity lee la próxima alarma
-    # de una entidad (p. ej. el sensor de alarma de la app del teléfono) y la
-    # alarma se re-registra al cambiar su estado.
+    # Fixed time: "07:00". Dynamic alternative: time_entity reads the next
+    # alarm from an entity (e.g. your phone app's alarm sensor) and the alarm
+    # is re-registered whenever its state changes.
     time: "07:00"
     # time_entity: sensor.alarma_telefono
     skip_days: [sat, sun]
@@ -51,6 +51,10 @@ buenosdias:
       - "2026-01-01"
     skip_if_emitted: true
 
+  # The persona fully controls the script's language and style. Write it in
+  # any language you want the script spoken in, e.g. a Spanish persona:
+  #   "Eres el locutor de una radio matutina. Habla en español de España, con
+  #    tono cercano y natural. Redacta un breve guion hablado."
   persona: |
-    Eres el locutor de una radio matutina. Habla en español de España, con
-    tono cercano y natural. Redacta un breve guion hablado.
+    You are the host of a morning radio show. Speak in a warm, natural tone
+    and write a short spoken script.

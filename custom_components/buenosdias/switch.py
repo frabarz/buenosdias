@@ -1,4 +1,4 @@
-"""Plataforma switch: habilita o deshabilita la alarma del buenos días."""
+"""Switch platform: enables or disables the good-morning alarm."""
 
 from __future__ import annotations
 
@@ -21,14 +21,14 @@ async def async_setup_platform(
     async_add_entities: Any,
     discovery_info: Any = None,
 ) -> None:
-    """Registra el switch de habilitación de la alarma."""
+    """Register the alarm enable switch."""
     switch = BuenosdiasEnabledSwitch(hass)
     hass.data[DOMAIN]["entities"].append(switch)
     async_add_entities([switch])
 
 
 class BuenosdiasEnabledSwitch(SwitchEntity):
-    """Switch que pausa o reanuda la alarma diaria."""
+    """Switch that pauses or resumes the daily alarm."""
 
     _attr_has_entity_name = True
     _attr_name = "enabled"
@@ -41,13 +41,13 @@ class BuenosdiasEnabledSwitch(SwitchEntity):
         self._attr_is_on = bool(hass.data[DOMAIN].get("enabled", True))
 
     async def async_turn_on(self, **kwargs) -> None:
-        """Habilita la alarma."""
+        """Enable the alarm."""
         self.hass.data[DOMAIN]["enabled"] = True
         self._attr_is_on = True
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs) -> None:
-        """Deshabilita la alarma."""
+        """Disable the alarm."""
         self.hass.data[DOMAIN]["enabled"] = False
         self._attr_is_on = False
         self.async_write_ha_state()

@@ -3,37 +3,37 @@
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-%E2%89%A5%202025.2-41BDF5)](https://www.home-assistant.io)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Radio matutina personalizada para Home Assistant. Cada mañana recoge contexto
-(clima, calendario, sensores y feeds RSS), pide a un LLM que redacte un guion
-tipo "radio matutina" y lo emite por altavoz mediante el TTS integrado de HA,
-actuando como alarma hablada.
+A personalized morning radio for Home Assistant. Every morning it gathers
+context (weather, calendar, sensors and RSS feeds), has an LLM write a
+"morning radio" script and plays it over your speakers through HA's built-in
+TTS, acting as a spoken alarm.
 
 ## Overview
 
-`buenosdias` es una `custom_component` (integración de servicio) que vive
-dentro del proceso de Home Assistant. No necesita add-ons, contenedores ni
-servidores externos:
+`buenosdias` is a `custom_component` (service integration) that lives inside
+the Home Assistant process. It needs no add-ons, containers or external
+servers:
 
-1. **Contexto** — recolecta el estado de entidades de HA (weather, calendar,
-   sensor) y de feeds RSS configurados (noticias y eventos).
-2. **Guion** — un LLM redacta el guion hablado. Primario: el agente de
-   conversación de HA vía `conversation.async_converse(...)` con
-   `extra_system_prompt`. Fallback: endpoint compatible con OpenAI
+1. **Context** — collects the state of HA entities (weather, calendar,
+   sensor) and configured RSS feeds (news and events).
+2. **Script** — an LLM writes the spoken script. Primary: HA's conversation
+   agent via `conversation.async_converse(...)` with
+   `extra_system_prompt`. Fallback: OpenAI-compatible endpoint
    (`/chat/completions`).
-3. **Emisión** — el texto se envía al TTS integrado de HA (`tts.speak`) sobre
-   un `media_player` configurado.
-4. **Alarma** — auto-scheduling diario con omisiones (`skip_days`, `feriados`,
-   `skip_if_emitted`), estado persistente ("ya emitido") y entidades
-   (switch de habilitación + sensores de estado).
+3. **Playback** — the text is sent to HA's built-in TTS (`tts.speak`) on a
+   configured `media_player`.
+4. **Alarm** — daily auto-scheduling with skip rules (`skip_days`, `feriados`,
+   `skip_if_emitted`), persistent state ("already emitted") and entities
+   (enable switch + status sensors).
 
 ## Architecture
 
-Pipeline y módulos:
+Pipeline and modules:
 
 ```
                 ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
   HA states ───▶│  sources.py  │──▶│  script.py   │──▶│  speak.py    │──▶ TTS
-  RSS feeds ───▶│ (contexto)   │   │ (LLM + valid)│   │ (media_player│
+  RSS feeds ───▶│ (context)    │   │ (LLM + valid)│   │ (media_player│
                 └──────────────┘   └──────────────┘   └──────────────┘
                        ▲                  │  ▲                 │
                        │            coordinator.async_run     │
@@ -43,51 +43,51 @@ Pipeline y módulos:
                        │
                   state.py (storage.Store)
                        │
-              switch.py / sensor.py (entidades)
+              switch.py / sensor.py (entities)
 ```
 
-| Módulo | Responsabilidad |
+| Module | Responsibility |
 | --- | --- |
-| `sources.py` | Contexto desde `hass.states` + fusión de feeds RSS. |
-| `rss.py` | Fetch/parseo/filtrado/dedup de feeds (`feedparser` + `httpx`). |
+| `sources.py` | Context from `hass.states` + RSS feed merging. |
+| `rss.py` | Feed fetch/parsing/filtering/dedup (`feedparser` + `httpx`). |
 | `llm.py` | `HAConversationLLM`, `OpenAICompatLLM`, `FallbackLLM`, `build_llm`. |
-| `prompts.py` | Plantilla de persona "radio matutina" (texto en español). |
-| `script.py` | Generación y validación del guion (no vacío, ≤ `max_chars`, sin markdown, reintento único). |
-| `speak.py` | `async_speak`: encendido del `media_player`, volumen y `tts.speak` con `blocking=True`. |
-| `coordinator.py` | `async_run(hass, config, emit)` — pipeline contexto → guion → TTS. |
-| `state.py` | `StateStore` sobre `hass.helpers.storage.Store` (`last_emission_date`, `last_result`, `next_alarm`). |
-| `scheduler.py` | Disparo diario, omisiones y cálculo de próxima alarma. |
-| `switch.py` / `sensor.py` | Plataformas de entidades. |
+| `prompts.py` | "Morning radio" persona template. |
+| `script.py` | Script generation and validation (non-empty, ≤ `max_chars`, no markdown, single retry). |
+| `speak.py` | `async_speak`: `media_player` power-on, volume and `tts.speak` with `blocking=True`. |
+| `coordinator.py` | `async_run(hass, config, emit)` — context → script → TTS pipeline. |
+| `state.py` | `StateStore` on top of `hass.helpers.storage.Store` (`last_emission_date`, `last_result`, `next_alarm`). |
+| `scheduler.py` | Daily trigger, skip rules and next alarm computation. |
+| `switch.py` / `sensor.py` | Entity platforms. |
 
-El mínimo soportado de HA es **2025.2** (introduce
-`conversation.async_converse(..., extra_system_prompt=...)`, declarado en
+The minimum supported HA version is **2025.2** (it introduces
+`conversation.async_converse(..., extra_system_prompt=...)`, declared in
 `manifest.json`).
 
 ## Repository layout
 
 ```
-flake.nix                     # Flake NixOS (overlay + packages + devShell + checks)
+flake.nix                     # NixOS flake (overlay + packages + devShell + checks)
 nixos/overlay.nix             # buildHomeAssistantComponent → home-assistant-custom-components.buenosdias
-nixos/example.nix             # Ejemplo de uso en un module de NixOS
-config.example.yaml           # Configuración YAML de ejemplo documentada
-custom_components/buenosdias/ # La integración (código de HA)
-tests/                        # Suite pytest
-pyproject.toml                # Packaging para desarrollo/venv
+nixos/example.nix             # Usage example in a NixOS module
+config.example.yaml           # Documented example YAML configuration
+custom_components/buenosdias/ # The integration (HA code)
+tests/                        # pytest suite
+pyproject.toml                # Packaging for development/venv
 ```
 
 ## Development Setup
 
-Requisitos: Python ≥ 3.13 (lo exige Home Assistant ≥ 2025.2).
+Requirements: Python ≥ 3.13 (required by Home Assistant ≥ 2025.2).
 
-**Recomendado (NixOS)** — entorno reproducible con Python 3.14 + HA desde
-nixpkgs (sin pip ni toolchains):
+**Recommended (NixOS)** — reproducible environment with Python 3.14 + HA from
+nixpkgs (no pip or toolchains):
 
 ```sh
 nix develop
 pytest -q
 ```
 
-**Alternativa (venv con pip)**:
+**Alternative (pip venv)**:
 
 ```sh
 python -m venv .venv
@@ -96,22 +96,22 @@ python -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-La suite usa un harness ligero (`tests/conftest.py`) con un `fake_hass` que
-sustituye a HA (sin eventos reales, sin I/O de red).
+The suite uses a lightweight harness (`tests/conftest.py`) with a `fake_hass`
+that substitutes HA (no real events, no network I/O).
 
 ## Usage (Internal)
 
-La integración se invoca a través de los servicios de HA:
+The integration is invoked through HA services:
 
-- `buenosdias.context` — devuelve el contexto recolectado (JSON).
-- `buenosdias.generate` — genera el guion sin emitir (dry-run).
-- `buenosdias.emit` — pipeline completo: contexto → guion → TTS.
+- `buenosdias.context` — returns the collected context (JSON).
+- `buenosdias.generate` — generates the script without playing it (dry-run).
+- `buenosdias.emit` — full pipeline: context → script → TTS.
 
-Entidades:
+Entities:
 
-- `switch.buenosdias_enabled` — habilita/deshabilita la alarma.
-- `sensor.buenosdias_last_status` — resultado de la última emisión.
-- `sensor.buenosdias_next_alarm` — próxima hora de alarma.
+- `switch.buenosdias_enabled` — enables/disables the alarm.
+- `sensor.buenosdias_last_status` — result of the last playback.
+- `sensor.buenosdias_next_alarm` — next alarm time.
 
 ## Testing
 
@@ -119,20 +119,19 @@ Entidades:
 .venv/bin/python -m pytest -q
 ```
 
-111 tests verdes. Los tests se ejecutan también dentro del build Nix
-(con `--asyncio-mode=auto` para convivir con el harness de
-`pytest-homeassistant-custom-component`).
+All tests pass. They also run inside the Nix build (with `--asyncio-mode=auto`
+so it coexists with the `pytest-homeassistant-custom-component` harness).
 
 ## Packaging (NixOS)
 
 ```sh
-nix build .#default          # construye la derivación (corre los tests)
+nix build .#default          # builds the derivation (runs the tests)
 ```
 
-El overlay expone `home-assistant-custom-components.buenosdias`; se habilita
-en `services.home-assistant.customComponents`. Ver `nixos/example.nix` y
+The overlay exposes `home-assistant-custom-components.buenosdias`; enable it
+in `services.home-assistant.customComponents`. See `nixos/example.nix` and
 `config.example.yaml`.
 
 ## License
 
-Apache-2.0. Ver [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](LICENSE).

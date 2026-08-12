@@ -1,4 +1,4 @@
-"""Persistencia del estado de la alarma con hass.helpers.storage.Store."""
+"""Persistence of the alarm state with hass.helpers.storage.Store."""
 
 from __future__ import annotations
 
@@ -11,12 +11,12 @@ DEFAULT_STORE_KEY = "buenosdias.state"
 
 
 class StateStore:
-    """Almacena y recupera el estado persistente de la alarma.
+    """Stores and retrieves the persistent alarm state.
 
-    Campos:
-    - ``last_emission_date``: última fecha (YYYY-MM-DD) en que se emitió.
-    - ``last_result``: resultado de la última emisión ("ok" o descripción de error).
-    - ``next_alarm``: próxima hora de alarma (ISO-8601, UTC) o None.
+    Fields:
+    - ``last_emission_date``: last date (YYYY-MM-DD) on which it was played.
+    - ``last_result``: result of the last playback ("ok" or error description).
+    - ``next_alarm``: next alarm time (ISO-8601, UTC) or None.
     """
 
     def __init__(
@@ -46,7 +46,7 @@ class StateStore:
         return self._data["next_alarm"]
 
     async def async_load(self) -> None:
-        """Carga el estado persistido (si existe)."""
+        """Load the persisted state (if any)."""
         loaded = await self._store.async_load()
         if isinstance(loaded, dict):
             for key in self._data:
@@ -58,7 +58,7 @@ class StateStore:
         result: str = "ok",
         next_alarm: str | None = None,
     ) -> None:
-        """Registra una emisión y persiste el estado."""
+        """Record a playback and persist the state."""
         self._data["last_emission_date"] = date_str
         self._data["last_result"] = result
         self._data["next_alarm"] = next_alarm

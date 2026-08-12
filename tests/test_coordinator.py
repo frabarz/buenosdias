@@ -1,4 +1,4 @@
-"""Tests del pipeline completo (contexto → guion → TTS)."""
+"""Tests of the full pipeline (context → script → TTS)."""
 
 import asyncio
 
@@ -13,7 +13,7 @@ from custom_components.buenosdias.speak import SpeakError
 
 class _FixedLLM(LLMClient):
     async def async_complete(self, system, user):
-        return "Buenos días, hoy hace sol."
+        return "Good morning, it is sunny today."
 
 
 def _run(coro):
@@ -35,7 +35,7 @@ def _config():
     return {CONF_SOURCES: {CONF_WEATHER: ["weather.casa"]}}
 
 
-def test_async_run_genera_y_emite(monkeypatch):
+def test_async_run_generates_and_plays(monkeypatch):
     spoken = {}
 
     async def fake_speak(hass, config, text):
@@ -45,11 +45,11 @@ def test_async_run_genera_y_emite(monkeypatch):
     monkeypatch.setattr(script, "build_llm", lambda hass, config: _FixedLLM())
 
     result = _run(coordinator.async_run(_make_hass(), _config()))
-    assert result["script"] == "Buenos días, hoy hace sol."
-    assert spoken["text"] == "Buenos días, hoy hace sol."
+    assert result["script"] == "Good morning, it is sunny today."
+    assert spoken["text"] == "Good morning, it is sunny today."
 
 
-def test_async_run_emit_false_no_emite(monkeypatch):
+def test_async_run_emit_false_does_not_play(monkeypatch):
     spoken = []
 
     async def fake_speak(hass, config, text):
@@ -59,13 +59,13 @@ def test_async_run_emit_false_no_emite(monkeypatch):
     monkeypatch.setattr(script, "build_llm", lambda hass, config: _FixedLLM())
 
     result = _run(coordinator.async_run(_make_hass(), _config(), emit=False))
-    assert result["script"] == "Buenos días, hoy hace sol."
+    assert result["script"] == "Good morning, it is sunny today."
     assert spoken == []
 
 
-def test_async_run_falla_speak_levanta_pipeline_error(monkeypatch):
+def test_async_run_speak_failure_raises_pipeline_error(monkeypatch):
     async def fake_speak(hass, config, text):
-        raise SpeakError("tts roto")
+        raise SpeakError("tts broken")
 
     monkeypatch.setattr(coordinator, "async_speak", fake_speak)
     monkeypatch.setattr(script, "build_llm", lambda hass, config: _FixedLLM())
@@ -74,9 +74,9 @@ def test_async_run_falla_speak_levanta_pipeline_error(monkeypatch):
         _run(coordinator.async_run(_make_hass(), _config()))
 
 
-def test_async_run_falla_guion_levanta_pipeline_error(monkeypatch):
+def test_async_run_script_failure_raises_pipeline_error(monkeypatch):
     async def bad_complete(system, user):
-        raise RuntimeError("llm caído")
+        raise RuntimeError("llm down")
 
     class _BadLLM(LLMClient):
         async def async_complete(self, system, user):

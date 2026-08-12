@@ -1,4 +1,4 @@
-"""Recolección de contexto desde feeds RSS (noticias y eventos)."""
+"""Context collection from RSS feeds (news and events)."""
 
 from __future__ import annotations
 
@@ -31,12 +31,12 @@ SUMMARY_MAX_LEN = 500
 
 
 def _normalize_title(title: str) -> str:
-    """Normaliza un título para deduplicar entradas repetidas."""
+    """Normalize a title to deduplicate repeated entries."""
     return re.sub(r"[\s\W_]+", "", (title or "").lower())
 
 
 def _entry_published(entry: Any) -> datetime | None:
-    """Devuelve la fecha de publicación (UTC) de una entrada, o None."""
+    """Return the entry publication date (UTC), or None."""
     for key in ("published_parsed", "updated_parsed"):
         struct = entry.get(key)
         if not struct:
@@ -57,7 +57,7 @@ def _entry_published(entry: Any) -> datetime | None:
 
 
 def _entry_brief(entry: Any, feed_title: str | None) -> dict:
-    """Extrae un brief serializable de una entrada RSS."""
+    """Extract a serializable brief from an RSS entry."""
     published = _entry_published(entry)
     summary = entry.get("summary") or entry.get("description") or ""
     summary = re.sub(r"<[^>]+>", " ", summary)
@@ -72,10 +72,10 @@ def _entry_brief(entry: Any, feed_title: str | None) -> dict:
 
 
 def parse_feed_content(content: bytes, feed: dict) -> list[dict]:
-    """Parsea un feed, filtra por antigüedad y deduplica por título normalizado."""
+    """Parse a feed, filter by age and deduplicate by normalized title."""
     parsed: Any = feedparser.parse(content)
     if parsed.bozo and not parsed.entries:
-        msg = f"feed inválido: {parsed.get('bozo_exception')}"
+        msg = f"invalid feed: {parsed.get('bozo_exception')}"
         raise ValueError(msg)
 
     max_age_hours = feed.get(CONF_MAX_AGE_HOURS, DEFAULT_MAX_AGE_HOURS)
@@ -105,7 +105,7 @@ def parse_feed_content(content: bytes, feed: dict) -> list[dict]:
 
 
 async def _fetch_one(client: httpx.AsyncClient, feed: dict) -> list[dict]:
-    """Descarga y parsea un único feed."""
+    """Download and parse a single feed."""
     response = await client.get(feed[CONF_URL])
     response.raise_for_status()
     return await asyncio.to_thread(parse_feed_content, response.content, feed)
@@ -116,10 +116,10 @@ async def async_fetch_feeds(
     feeds: list[dict],
     client: httpx.AsyncClient | None = None,
 ) -> dict:
-    """Recolecta las secciones news y events desde los feeds configurados.
+    """Collect the news and events sections from the configured feeds.
 
-    Un feed caído o inválido no aborta el resto: se registra un warning y
-    su sección queda vacía.
+    A down or invalid feed does not abort the rest: a warning is logged and
+    its section stays empty.
     """
     sections: dict[str, list[dict]] = {KIND_NEWS: [], KIND_EVENTS: []}
     if not feeds:
@@ -142,7 +142,7 @@ async def async_fetch_feeds(
 
     for feed, result in zip(feeds, results):
         if isinstance(result, BaseException):
-            _LOGGER.warning("Feed caído %s: %s", feed.get(CONF_URL), result)
+            _LOGGER.warning("Feed failed %s: %s", feed.get(CONF_URL), result)
             continue
         sections.setdefault(feed.get(CONF_KIND, KIND_NEWS), []).extend(result)
     return sections

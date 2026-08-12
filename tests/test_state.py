@@ -1,4 +1,4 @@
-"""Tests de la persistencia de estado (StateStore)."""
+"""Tests of the state persistence (StateStore)."""
 
 import asyncio
 
@@ -13,14 +13,14 @@ def _run(coro):
     return asyncio.run(coro)
 
 
-def test_state_store_defaults_vacios():
+def test_state_store_defaults_empty():
     store = StateStore(_FakeHass(), store=_FakeStore(None))
     assert store.last_emission_date is None
     assert store.last_result is None
     assert store.next_alarm is None
 
 
-def test_state_store_load_restaura_datos():
+def test_state_store_load_restores_data():
     store = StateStore(
         _FakeHass(),
         store=_FakeStore(
@@ -37,13 +37,13 @@ def test_state_store_load_restaura_datos():
     assert store.next_alarm == "2026-08-11T05:00:00+00:00"
 
 
-def test_state_store_load_ignora_no_dict():
+def test_state_store_load_ignores_non_dict():
     store = StateStore(_FakeHass(), store=_FakeStore("nope"))
     _run(store.async_load())
     assert store.last_emission_date is None
 
 
-def test_state_store_mark_emitted_persiste():
+def test_state_store_mark_emitted_persists():
     fake_store = _FakeStore(None)
     store = StateStore(_FakeHass(), store=fake_store)
     _run(store.async_mark_emitted("2026-08-10", "ok", "2026-08-11T05:00:00+00:00"))
@@ -59,10 +59,10 @@ def test_state_store_mark_emitted_persiste():
     ]
 
 
-def test_state_store_mark_emitted_con_error():
+def test_state_store_mark_emitted_with_error():
     store = StateStore(_FakeHass(), store=_FakeStore(None))
-    _run(store.async_mark_emitted("2026-08-10", "error: tts roto"))
-    assert store.last_result == "error: tts roto"
+    _run(store.async_mark_emitted("2026-08-10", "error: tts broken"))
+    assert store.last_result == "error: tts broken"
     assert store.next_alarm is None
 
 

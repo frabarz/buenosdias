@@ -1,4 +1,4 @@
-"""Constantes de la integración buenosdias."""
+"""Constants of the buenosdias integration."""
 
 DOMAIN = "buenosdias"
 VERSION = "0.1.0"

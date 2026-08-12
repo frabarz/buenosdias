@@ -35,13 +35,13 @@ in
         ++ (home-assistant.getPackages "switch" home-assistant.python3Packages)
         ++ (home-assistant.getPackages "sensor" home-assistant.python3Packages);
 
-      # El harness de HA registra fixtures async autouse; los tests de este
-      # componente son síncronos y usan asyncio.run(), así que se necesita
-      # el modo auto de pytest-asyncio.
+      # The HA harness registers autouse async fixtures; this component's
+      # tests are synchronous and use asyncio.run(), so pytest-asyncio's
+      # auto mode is required.
       pytestFlags = [ "--asyncio-mode=auto" ];
 
       meta = {
-        description = "Radio matutina personalizada para Home Assistant con LLM";
+        description = "A personalized morning radio for Home Assistant";
         license = prev.lib.licenses.asl20;
       };
     };

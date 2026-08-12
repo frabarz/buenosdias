@@ -1,4 +1,4 @@
-"""Tests de las entidades switch y sensores de la alarma."""
+"""Tests of the switch and sensor entities."""
 
 import asyncio
 
@@ -22,7 +22,7 @@ def _make_switch(hass, monkeypatch):
     return switch
 
 
-def test_switch_arranca_habilitado(fake_hass, monkeypatch):
+def test_switch_starts_enabled(fake_hass, monkeypatch):
     hass, _ = fake_hass()
     hass.data[DOMAIN] = {"enabled": True}
     switch = _make_switch(hass, monkeypatch)
@@ -30,7 +30,7 @@ def test_switch_arranca_habilitado(fake_hass, monkeypatch):
     assert switch.unique_id == "buenosdias_enabled"
 
 
-def test_switch_turn_off_deshabilita(fake_hass, monkeypatch):
+def test_switch_turn_off_disables(fake_hass, monkeypatch):
     hass, _ = fake_hass()
     hass.data[DOMAIN] = {"enabled": True}
     switch = _make_switch(hass, monkeypatch)
@@ -39,7 +39,7 @@ def test_switch_turn_off_deshabilita(fake_hass, monkeypatch):
     assert hass.data[DOMAIN]["enabled"] is False
 
 
-def test_switch_turn_on_habilita(fake_hass, monkeypatch):
+def test_switch_turn_on_enables(fake_hass, monkeypatch):
     hass, _ = fake_hass()
     hass.data[DOMAIN] = {"enabled": False}
     switch = _make_switch(hass, monkeypatch)
@@ -49,7 +49,7 @@ def test_switch_turn_on_habilita(fake_hass, monkeypatch):
     assert hass.data[DOMAIN]["enabled"] is True
 
 
-def test_sensor_last_status_sin_emisiones(fake_hass):
+def test_sensor_last_status_without_emissions(fake_hass):
     hass, _ = fake_hass()
     store = StateStore(hass, store=FakeStore(None))
     sensor = BuenosdiasLastStatusSensor(hass, store)
@@ -57,7 +57,7 @@ def test_sensor_last_status_sin_emisiones(fake_hass):
     assert sensor.unique_id == "buenosdias_last_status"
 
 
-def test_sensor_last_status_tras_emision(fake_hass):
+def test_sensor_last_status_after_emission(fake_hass):
     hass, _ = fake_hass()
     store = StateStore(hass, store=FakeStore(None))
     sensor = BuenosdiasLastStatusSensor(hass, store)
@@ -68,7 +68,7 @@ def test_sensor_last_status_tras_emision(fake_hass):
     assert sensor.extra_state_attributes["next_alarm"] == "2026-08-11T05:00:00+00:00"
 
 
-def test_sensor_next_alarm_sin_programar(fake_hass):
+def test_sensor_next_alarm_unscheduled(fake_hass):
     hass, _ = fake_hass()
     store = StateStore(hass, store=FakeStore(None))
     sensor = BuenosdiasNextAlarmSensor(hass, store)
@@ -76,7 +76,7 @@ def test_sensor_next_alarm_sin_programar(fake_hass):
     assert sensor.unique_id == "buenosdias_next_alarm"
 
 
-def test_sensor_next_alarm_programado(fake_hass):
+def test_sensor_next_alarm_scheduled(fake_hass):
     hass, _ = fake_hass()
     store = StateStore(hass, store=FakeStore(None))
     sensor = BuenosdiasNextAlarmSensor(hass, store)

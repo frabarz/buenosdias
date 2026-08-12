@@ -1,5 +1,5 @@
 {
-  description = "buenosdias: radio matutina personalizada para Home Assistant con LLM";
+  description = "buenosdias: a personalized morning radio for Home Assistant with LLM";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -53,7 +53,7 @@
           )
         ];
         shellHook = ''
-          echo "buenosdias dev shell (Python 3.14 + Home Assistant). Ejecuta: pytest -q"
+          echo "buenosdias dev shell (Python 3.14 + Home Assistant). Run: pytest -q"
         '';
       };
 

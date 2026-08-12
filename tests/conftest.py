@@ -1,4 +1,4 @@
-"""Helpers compartidos para los tests de buenosdias."""
+"""Shared helpers for the buenosdias tests."""
 
 from types import SimpleNamespace
 
@@ -13,7 +13,7 @@ class FakeState:
 
 
 class FakeStore:
-    """Reemplazo de hass.helpers.storage.Store que registra guardados."""
+    """Replacement for hass.helpers.storage.Store that records saves."""
 
     def __init__(self, data=None):
         self.data = data
@@ -28,12 +28,12 @@ class FakeStore:
 
 @pytest.fixture(autouse=True)
 def fake_trackers(monkeypatch):
-    """Parchea helpers pesados de HA usados por async_setup.
+    """Patch the heavy HA helpers used by async_setup.
 
-    - ``async_track_utc_time_change``: graba las llamadas del scheduler.
-    - ``async_track_state_change_event``: graba los listeners de time_entity.
-    - ``discovery.async_load_platform``: graba el alta de plataformas.
-    Devuelve ambos registros para que los tests los inspeccionen.
+    - ``async_track_utc_time_change``: records the scheduler calls.
+    - ``async_track_state_change_event``: records the time_entity listeners.
+    - ``discovery.async_load_platform``: records the platform registration.
+    Returns both records for the tests to inspect.
     """
     track_calls = []
     load_platform_calls = []
@@ -72,7 +72,7 @@ def fake_trackers(monkeypatch):
 
 @pytest.fixture
 def fake_hass():
-    """Devuelve un hass simplificado que registra servicios en `registered`."""
+    """Return a simplified hass that registers services in `registered`."""
 
     def _make(states=None):
         registered = {}

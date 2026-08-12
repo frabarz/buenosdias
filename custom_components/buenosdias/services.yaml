@@ -1,23 +1,23 @@
 context:
-  name: Contexto matutino
+  name: Morning context
   description: >
-    Devuelve el contexto recolectado (clima, calendario, sensores, RSS) en JSON.
-    Útil para depurar la recolección de fuentes.
+    Returns the collected context (weather, calendar, sensors, RSS) as JSON.
+    Useful for debugging source collection.
   fields: {}
   returns: response
 
 generate:
-  name: Generar guion
+  name: Generate script
   description: >
-    Genera el guion del "buenos días" con el LLM configurado (dry-run) y lo
-    devuelve como respuesta, sin emitir audio.
+    Generates the "good morning" script with the configured LLM (dry-run) and
+    returns it as the response, without playing any audio.
   fields: {}
   returns: response
 
 emit:
-  name: Emitir buenos días
+  name: Play good morning
   description: >
-    Ejecuta el pipeline completo: recoge contexto, genera el guion con el LLM
-    y lo emite por TTS en el media_player configurado.
+    Runs the full pipeline: gathers context, generates the script with the LLM
+    and plays it via TTS on the configured media_player.
   fields: {}
   returns: response

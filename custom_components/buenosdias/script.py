@@ -1,4 +1,4 @@
-"""Generación y validación del guion del buenos días."""
+"""Generation and validation of the good-morning script."""
 
 from __future__ import annotations
 
@@ -22,16 +22,16 @@ MARKDOWN_BLOCK_RE = re.compile(
 
 
 def validate_script(text: str, max_chars: int) -> str:
-    """Valida y normaliza el guion generado."""
+    """Validate and normalize the generated script."""
     text = (text or "").strip()
     if not text:
-        msg = "guion vacío"
+        msg = "empty script"
         raise ValueError(msg)
     if len(text) > max_chars:
-        msg = f"guion demasiado largo ({len(text)} > {max_chars})"
+        msg = f"script too long ({len(text)} > {max_chars})"
         raise ValueError(msg)
     if MARKDOWN_BLOCK_RE.search(text):
-        msg = "el guion contiene bloques markdown"
+        msg = "script contains markdown blocks"
         raise ValueError(msg)
     return text
 
@@ -42,7 +42,7 @@ async def async_generate_script(
     context: dict,
     llm: LLMClient | None = None,
 ) -> str:
-    """Genera el guion del buenos días con un reintento único."""
+    """Generate the good-morning script with a single retry."""
     llm_cfg = config.get(CONF_LLM, {})
     max_chars = llm_cfg.get(CONF_MAX_CHARS, DEFAULT_MAX_CHARS)
     client = llm or build_llm(hass, config)
@@ -58,6 +58,6 @@ async def async_generate_script(
             )
         except (LLMError, ValueError) as err:
             last_error = err
-            _LOGGER.warning("Intento %s de generación falló: %s", attempt, err)
-    msg = f"generación de guion falló: {last_error}"
+            _LOGGER.warning("Script generation attempt %s failed: %s", attempt, err)
+    msg = f"script generation failed: {last_error}"
     raise LLMError(msg)

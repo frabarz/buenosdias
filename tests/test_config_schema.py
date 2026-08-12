@@ -1,4 +1,4 @@
-"""Tests del esquema de configuración de buenosdias."""
+"""Tests of the buenosdias configuration schema."""
 
 import pytest
 import voluptuous as vol
@@ -20,14 +20,14 @@ from custom_components.buenosdias.const import (
 )
 
 
-def test_schema_acepta_configuracion_completa():
+def test_schema_accepts_full_configuration():
     config = {
         DOMAIN: {
             "llm": {"mode": "openai_compatible", "max_chars": 1500},
             "tts": {"entity_id": "tts.piper", "media_player": "media_player.sala"},
             "sources": {"weather": ["weather.casa"], "sensors": ["sensor.x"]},
             "schedule": {"time": "06:30", "skip_days": ["sat", "sun"]},
-            "persona": "Eres un locutor de radio.",
+            "persona": "You are a radio host.",
         }
     }
     validated = CONFIG_SCHEMA(config)
@@ -35,7 +35,7 @@ def test_schema_acepta_configuracion_completa():
     assert validated[DOMAIN]["schedule"]["time"] == "06:30"
 
 
-def test_schema_aplica_defaults():
+def test_schema_applies_defaults():
     validated = CONFIG_SCHEMA({DOMAIN: {}})
     conf = validated[DOMAIN]
     assert conf[CONF_LLM][CONF_MODE] == MODE_HA_CONVERSATION
@@ -46,47 +46,47 @@ def test_schema_aplica_defaults():
     assert conf[CONF_SCHEDULE][CONF_TIME] == "07:00"
 
 
-def test_schema_acepta_time_entity():
+def test_schema_accepts_time_entity():
     config = {
-        DOMAIN: {"schedule": {CONF_TIME_ENTITY: "sensor.alarma_telefono"}}
+        DOMAIN: {"schedule": {CONF_TIME_ENTITY: "sensor.phone_alarm"}}
     }
     validated = CONFIG_SCHEMA(config)
     assert (
         validated[DOMAIN][CONF_SCHEDULE][CONF_TIME_ENTITY]
-        == "sensor.alarma_telefono"
+        == "sensor.phone_alarm"
     )
 
 
-def test_schema_aplica_default_time_entity():
+def test_schema_default_time_entity():
     validated = CONFIG_SCHEMA({DOMAIN: {}})
     assert validated[DOMAIN][CONF_SCHEDULE][CONF_TIME_ENTITY] == ""
 
 
-def test_schema_permite_ausencia_de_la_seccion():
-    validated = CONFIG_SCHEMA({"otra_integracion": {}})
+def test_schema_allows_section_absence():
+    validated = CONFIG_SCHEMA({"other_integration": {}})
     assert DOMAIN not in validated
 
 
-def test_schema_permite_claves_extra_top_level():
-    validated = CONFIG_SCHEMA({DOMAIN: {}, "otra_integracion": {"a": 1}})
+def test_schema_allows_extra_top_level_keys():
+    validated = CONFIG_SCHEMA({DOMAIN: {}, "other_integration": {"a": 1}})
     assert DOMAIN in validated
 
 
-def test_schema_acepta_feeds_rss():
+def test_schema_accepts_rss_feeds():
     config = {
         DOMAIN: {
             "sources": {
                 "rss": {
                     "feeds": [
                         {
-                            CONF_URL: "https://ejemplo.org/noticias.xml",
+                            CONF_URL: "https://example.org/news.xml",
                             "kind": "news",
                             "max_age_hours": 24,
                             "max_items": 5,
-                            "tags": ["ciudad"],
+                            "tags": ["city"],
                         },
                         {
-                            CONF_URL: "https://ejemplo.org/agenda.xml",
+                            CONF_URL: "https://example.org/agenda.xml",
                             "kind": "events",
                         },
                     ]
@@ -97,12 +97,12 @@ def test_schema_acepta_feeds_rss():
     validated = CONFIG_SCHEMA(config)
     feeds = validated[DOMAIN][CONF_SOURCES][CONF_RSS]["feeds"]
     assert feeds[0]["kind"] == "news"
-    assert feeds[0]["tags"] == ["ciudad"]
+    assert feeds[0]["tags"] == ["city"]
     assert feeds[1]["kind"] == KIND_EVENTS
-    assert feeds[1]["max_items"] == 5  # default aplicado
+    assert feeds[1]["max_items"] == 5  # default applied
 
 
-def test_schema_aplica_defaults_rss():
+def test_schema_applies_rss_defaults():
     validated = CONFIG_SCHEMA({DOMAIN: {}})
     assert validated[DOMAIN][CONF_SOURCES][CONF_RSS]["feeds"] == []
 
@@ -111,16 +111,16 @@ def test_schema_aplica_defaults_rss():
     "bad_config",
     [
         {DOMAIN: {"schedule": {"time": "25:00"}}},
-        {DOMAIN: {"schedule": {"skip_days": ["lunes"]}}},
+        {DOMAIN: {"schedule": {"skip_days": ["monday"]}}},
         {DOMAIN: {"schedule": {"feriados": ["01-01-2026"]}}},
         {DOMAIN: {"tts": {"volume": 1.5}}},
-        {DOMAIN: {"llm": {"mode": "no_existe"}}},
+        {DOMAIN: {"llm": {"mode": "does_not_exist"}}},
         {DOMAIN: {"llm": {"max_chars": 5}}},
         {DOMAIN: {"sources": {"rss": {"feeds": [{"url": ""}]}}}},
-        {DOMAIN: {"sources": {"rss": {"feeds": [{"url": "https://x.es", "kind": "deportes"}]}}}},
+        {DOMAIN: {"sources": {"rss": {"feeds": [{"url": "https://x.es", "kind": "sports"}]}}}},
         {DOMAIN: {"sources": {"rss": {"feeds": [{"url": "https://x.es", "max_age_hours": 0}]}}}},
     ],
 )
-def test_schema_rechaza_configuracion_invalida(bad_config):
+def test_schema_rejects_invalid_configuration(bad_config):
     with pytest.raises(vol.Invalid):
         CONFIG_SCHEMA(bad_config)

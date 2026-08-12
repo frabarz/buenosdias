@@ -1,4 +1,4 @@
-"""Tests de la recolección de contexto desde el estado de HA."""
+"""Tests of context collection from HA state."""
 
 import asyncio
 import json
@@ -35,26 +35,26 @@ def test_entity_brief_serializable():
     assert brief["state"] == "sunny"
     assert brief["attributes"] == {"temperature": 21.5}
     assert brief["last_updated"] is None
-    json.dumps(brief)  # debe ser serializable
+    json.dumps(brief)  # must be serializable
 
 
-def test_gather_ha_entities_devuelve_briefs():
+def test_gather_ha_entities_returns_briefs():
     hass = make_hass({"weather.casa": FakeState("sunny", {"temperature": 21.5})})
     result = sources.gather_ha_entities(hass, ["weather.casa"])
     assert result["weather.casa"]["state"] == "sunny"
 
 
-def test_gather_ha_entities_entidad_inexistente():
+def test_gather_ha_entities_missing_entity():
     hass = make_hass({})
-    result = sources.gather_ha_entities(hass, ["sensor.fantasma"])
-    assert result["sensor.fantasma"] == {"error": "entity not found"}
+    result = sources.gather_ha_entities(hass, ["sensor.ghost"])
+    assert result["sensor.ghost"] == {"error": "entity not found"}
 
 
-def test_async_gather_context_estructura():
+def test_async_gather_context_structure():
     hass = make_hass(
         {
             "weather.casa": FakeState("rainy", {"temperature": 12.0}),
-            "calendar.familia": FakeState("on", {"message": "cita médica 10:00"}),
+            "calendar.familia": FakeState("on", {"message": "doctor's appointment 10:00"}),
         }
     )
     config = {
@@ -68,8 +68,8 @@ def test_async_gather_context_estructura():
     context = asyncio.run(sources.async_gather_context(hass, config))
     assert "timestamp" in context
     assert context[CONF_WEATHER]["weather.casa"]["state"] == "rainy"
-    assert context[CONF_CALENDAR]["calendar.familia"]["attributes"]["message"] == "cita médica 10:00"
+    assert context[CONF_CALENDAR]["calendar.familia"]["attributes"]["message"] == "doctor's appointment 10:00"
     assert context[CONF_SENSORS] == {}
     assert context[KIND_NEWS] == []
     assert context[KIND_EVENTS] == []
-    json.dumps(context)  # debe ser serializable
+    json.dumps(context)  # must be serializable

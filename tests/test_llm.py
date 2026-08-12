@@ -1,4 +1,4 @@
-"""Tests de los clientes LLM."""
+"""Tests of the LLM clients."""
 
 import asyncio
 from types import SimpleNamespace
@@ -10,7 +10,6 @@ import pytest
 from custom_components.buenosdias.const import (
     CONF_LLM,
     CONF_OPENAI,
-    MODE_HA_CONVERSATION,
     MODE_OPENAI_COMPATIBLE,
 )
 from custom_components.buenosdias.llm import (
@@ -39,7 +38,7 @@ class FakeResult:
 
 class _FailingLLM(LLMClient):
     async def async_complete(self, system, user):
-        raise LLMError("fallo primario")
+        raise LLMError("primary failure")
 
 
 class _OkLLM(LLMClient):
@@ -55,18 +54,18 @@ def _patch_conversation(monkeypatch, async_converse):
     )
 
 
-def test_ha_conversation_llm_extrae_texto(monkeypatch):
+def test_ha_conversation_llm_extracts_text(monkeypatch):
     async def async_converse(**kwargs):
-        return FakeResult({"plain": {"speech": "Buenos días a todos."}})
+        return FakeResult({"plain": {"speech": "Good morning, everyone."}})
 
     _patch_conversation(monkeypatch, async_converse)
-    hass = SimpleNamespace(config=SimpleNamespace(language="es"))
+    hass = SimpleNamespace(config=SimpleNamespace(language="en"))
     llm = HAConversationLLM(hass)
     text = _run(llm.async_complete("system", "user"))
-    assert text == "Buenos días a todos."
+    assert text == "Good morning, everyone."
 
 
-def test_ha_conversation_llm_pasa_extra_system_prompt_y_agent(monkeypatch):
+def test_ha_conversation_llm_passes_extra_system_prompt_and_agent(monkeypatch):
     captured = {}
 
     async def async_converse(**kwargs):
@@ -74,7 +73,7 @@ def test_ha_conversation_llm_pasa_extra_system_prompt_y_agent(monkeypatch):
         return FakeResult({"plain": {"speech": "hola"}})
 
     _patch_conversation(monkeypatch, async_converse)
-    hass = SimpleNamespace(config=SimpleNamespace(language="es"))
+    hass = SimpleNamespace(config=SimpleNamespace(language="en"))
     llm = HAConversationLLM(hass, agent="conversation.openai")
     _run(llm.async_complete("SYS", "USR"))
     assert captured["extra_system_prompt"] == "SYS"
@@ -82,14 +81,14 @@ def test_ha_conversation_llm_pasa_extra_system_prompt_y_agent(monkeypatch):
     assert captured["text"] == "USR"
 
 
-def test_ha_conversation_llm_texto_vacio_es_error(monkeypatch):
+def test_ha_conversation_llm_empty_text_is_error(monkeypatch):
     _patch_conversation(monkeypatch, lambda **kwargs: FakeResult({"plain": {}}))
     llm = HAConversationLLM(SimpleNamespace(config=None))
     with pytest.raises(LLMError):
         _run(llm.async_complete("s", "u"))
 
 
-def test_ha_conversation_llm_error_del_agente(monkeypatch):
+def test_ha_conversation_llm_agent_error(monkeypatch):
     async def async_converse(**kwargs):
         raise RuntimeError("boom")
 
@@ -99,7 +98,7 @@ def test_ha_conversation_llm_error_del_agente(monkeypatch):
         _run(llm.async_complete("s", "u"))
 
 
-def test_openai_compat_llm_extrae_content_y_payload():
+def test_openai_compat_llm_extracts_content_and_payload():
     import json as json_module
 
     captured = {}
@@ -113,7 +112,7 @@ def test_openai_compat_llm_extrae_content_y_payload():
         assert body["messages"][1]["role"] == "user"
         assert body["messages"][1]["content"] == "usr"
         return httpx.Response(
-            200, json={"choices": [{"message": {"content": "Guion ok"}}]}
+            200, json={"choices": [{"message": {"content": "Script ok"}}]}
         )
 
     llm = OpenAICompatLLM(
@@ -123,7 +122,7 @@ def test_openai_compat_llm_extrae_content_y_payload():
         transport=httpx.MockTransport(handler),
     )
     text = _run(llm.async_complete("sys", "usr"))
-    assert text == "Guion ok"
+    assert text == "Script ok"
     assert captured["url"] == "http://localhost:11434/v1/chat/completions"
     assert captured["auth"] == "Bearer sk-123"
 
@@ -142,7 +141,7 @@ def test_openai_compat_llm_sin_api_key():
     assert captured["auth"] is None
 
 
-def test_openai_compat_llm_respuesta_invalida():
+def test_openai_compat_llm_invalid_response():
     def handler(request):
         return httpx.Response(200, json={"unexpected": True})
 
@@ -153,7 +152,7 @@ def test_openai_compat_llm_respuesta_invalida():
         _run(llm.async_complete("s", "u"))
 
 
-def test_openai_compat_llm_error_http():
+def test_openai_compat_llm_http_error():
     def handler(request):
         return httpx.Response(500, json={})
 
@@ -164,17 +163,17 @@ def test_openai_compat_llm_error_http():
         _run(llm.async_complete("s", "u"))
 
 
-def test_fallback_llm_usa_respaldo():
+def test_fallback_llm_uses_fallback():
     client = FallbackLLM(_FailingLLM(), _OkLLM())
     assert _run(client.async_complete("s", "u")) == "ok"
 
 
-def test_fallback_llm_primario_ok_no_usa_respaldo():
+def test_fallback_llm_primary_ok_skips_fallback():
     client = FallbackLLM(_OkLLM(), _FailingLLM())
     assert _run(client.async_complete("s", "u")) == "ok"
 
 
-def test_build_llm_ha_primario(monkeypatch):
+def test_build_llm_ha_primary(monkeypatch):
     fake_openai = lambda base_url, api_key, model, transport=None: _OkLLM()  # noqa: E731
     fake_ha = lambda hass, agent="": _FailingLLM()  # noqa: E731
     monkeypatch.setattr("custom_components.buenosdias.llm.OpenAICompatLLM", fake_openai)
@@ -187,7 +186,7 @@ def test_build_llm_ha_primario(monkeypatch):
     assert isinstance(client.fallback, _OkLLM)
 
 
-def test_build_llm_openai_primario(monkeypatch):
+def test_build_llm_openai_primary(monkeypatch):
     fake_openai = lambda base_url, api_key, model, transport=None: _OkLLM()  # noqa: E731
     fake_ha = lambda hass, agent="": _FailingLLM()  # noqa: E731
     monkeypatch.setattr("custom_components.buenosdias.llm.OpenAICompatLLM", fake_openai)

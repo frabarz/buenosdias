@@ -1,4 +1,4 @@
-"""Esquema de configuración de buenosdias."""
+"""Configuration schema of buenosdias."""
 
 from __future__ import annotations
 

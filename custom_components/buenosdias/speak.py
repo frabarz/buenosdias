@@ -1,4 +1,4 @@
-"""Emisión del guion por TTS sobre el media_player configurado."""
+"""Playback of the script via TTS on the configured media_player."""
 
 from __future__ import annotations
 
@@ -24,11 +24,11 @@ DEFAULT_VOLUME = 0.6
 
 
 class SpeakError(Exception):
-    """Error al emitir el guion por TTS."""
+    """Error playing the script via TTS."""
 
 
 def media_player_volume(hass: HomeAssistant, entity_id: str) -> float | None:
-    """Devuelve el volumen actual del media_player, o None si no se conoce."""
+    """Return the media_player's current volume level, or None if unknown."""
     state = hass.states.get(entity_id)
     if state is None:
         return None
@@ -41,21 +41,21 @@ async def _call(
     service: str,
     data: dict,
 ) -> None:
-    """Invoca un servicio de HA en bloque, traduciendo errores a SpeakError."""
+    """Call an HA service blocking, translating errors into SpeakError."""
     try:
         await hass.services.async_call(domain, service, data, blocking=True)
     except Exception as err:
-        msg = f"{domain}.{service} falló: {err}"
+        msg = f"{domain}.{service} failed: {err}"
         raise SpeakError(msg) from err
 
 
 async def async_speak(hass: HomeAssistant, config: dict, text: str) -> None:
-    """Reproduce `text` por TTS en el media_player configurado."""
+    """Play `text` via TTS on the configured media_player."""
     tts_cfg = config.get(CONF_TTS, {})
     tts_entity = tts_cfg.get(CONF_ENTITY_ID)
     media_player = tts_cfg.get(CONF_MEDIA_PLAYER)
     if not tts_entity or not media_player:
-        msg = "tts.entity_id y tts.media_player son obligatorios"
+        msg = "tts.entity_id and tts.media_player are required"
         raise SpeakError(msg)
 
     language = tts_cfg.get(CONF_LANGUAGE, DEFAULT_LANGUAGE)

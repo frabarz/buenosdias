@@ -1,4 +1,4 @@
-"""Recolección de contexto desde el estado de Home Assistant y feeds RSS."""
+"""Context collection from Home Assistant state and RSS feeds."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ SECTION_TIMESTAMP = "timestamp"
 
 
 def entity_brief(entity_id: str, state: Any) -> dict:
-    """Devuelve un dict serializable con lo esencial de un estado."""
+    """Return a serializable dict with the essentials of a state."""
     return {
         "entity_id": entity_id,
         "state": state.state,
@@ -38,7 +38,7 @@ def entity_brief(entity_id: str, state: Any) -> dict:
 
 
 def gather_ha_entities(hass: Any, entity_ids: list[str]) -> dict:
-    """Devuelve un brief serializable por cada entity_id pedido."""
+    """Return a serializable brief for each requested entity_id."""
     result: dict = {}
     for entity_id in entity_ids or []:
         state = hass.states.get(entity_id)
@@ -50,7 +50,7 @@ def gather_ha_entities(hass: Any, entity_ids: list[str]) -> dict:
 
 
 async def async_gather_context(hass: Any, config: dict) -> dict:
-    """Recolecta el contexto matutino (clima, calendario, sensores y RSS)."""
+    """Collect the morning context (weather, calendar, sensors and RSS)."""
     sources_cfg = config.get(CONF_SOURCES, {})
     feeds = sources_cfg.get(CONF_RSS, {}).get(CONF_FEEDS, [])
     rss_sections = await rss.async_fetch_feeds(hass, feeds)

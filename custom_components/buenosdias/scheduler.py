@@ -1,4 +1,4 @@
-"""Programación diaria de la alarma y lógica de omisión."""
+"""Daily alarm scheduling and skip logic."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ WEEKDAY_MAP = {
 
 
 def parse_time(value: str | datetime) -> tuple[int, int]:
-    """Normaliza 'HH:MM' o datetime ISO a (hora, minuto)."""
+    """Normalize 'HH:MM' or ISO datetime into (hour, minute)."""
     if isinstance(value, datetime):
         return value.hour, value.minute
 
@@ -53,7 +53,7 @@ def parse_time(value: str | datetime) -> tuple[int, int]:
     else:
         parsed = dt_util.parse_datetime(value)
         if parsed is None:
-            msg = f"Hora de alarma inválida: {value!r}"
+            msg = f"Invalid alarm time: {value!r}"
             raise ValueError(msg)
         if parsed.tzinfo is not None:
             parsed = dt_util.as_local(parsed)
@@ -62,9 +62,9 @@ def parse_time(value: str | datetime) -> tuple[int, int]:
 
 
 def read_alarm_time(hass: HomeAssistant, config: dict) -> tuple[int, int] | None:
-    """Devuelve (hora, minuto) según time_entity o la hora estática.
+    """Return (hour, minute) from time_entity or the static time.
 
-    Devuelve None si time_entity no está disponible o su valor no se parsea.
+    Returns None if time_entity is not available or its value cannot be parsed.
     """
     schedule = config.get(CONF_SCHEDULE, {})
     time_entity = schedule.get(CONF_TIME_ENTITY, "")
@@ -72,20 +72,20 @@ def read_alarm_time(hass: HomeAssistant, config: dict) -> tuple[int, int] | None
         state = hass.states.get(time_entity)
         if state is None or state.state in ("", "unavailable", "unknown", "none"):
             _LOGGER.warning(
-                "time_entity %s no disponible; alarma desactivada",
+                "time_entity %s not available; alarm disabled",
                 time_entity,
             )
             return None
         try:
             return parse_time(state.state)
         except ValueError as err:
-            _LOGGER.warning("time_entity %s con hora inválida: %s", time_entity, err)
+            _LOGGER.warning("time_entity %s has an invalid time: %s", time_entity, err)
             return None
     return parse_time(schedule.get(CONF_TIME, DEFAULT_TIME))
 
 
 def _day_allowed(day: date, schedule: dict) -> bool:
-    """Devuelve si el día no está omitido por skip_days ni feriados."""
+    """Return whether the day is not skipped by skip_days or feriados."""
     skip_days = schedule.get(CONF_SKIP_DAYS, [])
     if day.weekday() in {WEEKDAY_MAP[name] for name in skip_days}:
         return False
@@ -99,7 +99,7 @@ def should_fire(
     today: date | None = None,
     last_emitted_date: str | None = None,
 ) -> bool:
-    """Decide si la alarma debe sonar hoy según la configuración."""
+    """Decide whether the alarm should fire today based on the configuration."""
     schedule = config.get(CONF_SCHEDULE, {})
     today = today or dt_util.as_local(dt_util.utcnow()).date()
 
@@ -119,7 +119,7 @@ def next_fire_time(
     max_days: int = MAX_LOOKAHEAD_DAYS,
     alarm: tuple[int, int] | None = None,
 ) -> str | None:
-    """Calcula la próxima hora de alarma (ISO-8601 UTC) o None."""
+    """Compute the next alarm time (ISO-8601 UTC) or None."""
     schedule = config.get(CONF_SCHEDULE, {})
     local_now = dt_util.as_local(now or dt_util.utcnow())
     now_utc = dt_util.as_utc(now or dt_util.utcnow())
@@ -147,9 +147,9 @@ def async_setup_scheduler(
     config: dict,
     callback: Callable,
 ) -> Callable[[], None]:
-    """Registra el disparo diario; con time_entity se re-registra al cambiar su estado.
+    """Register the daily trigger; with time_entity it re-registers on state change.
 
-    Devuelve la función de cancelación del scheduler y del listener de estado.
+    Returns the cancellation function for the scheduler and the state listener.
     """
     schedule = config.get(CONF_SCHEDULE, {})
     time_entity = schedule.get(CONF_TIME_ENTITY, "")

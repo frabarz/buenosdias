@@ -1,4 +1,4 @@
-"""Tests de la recolección de contexto desde feeds RSS."""
+"""Tests of context collection from RSS feeds."""
 
 import asyncio
 import json
@@ -9,19 +9,18 @@ import httpx
 
 from custom_components.buenosdias import rss
 from custom_components.buenosdias.const import (
-    CONF_TAGS,
     CONF_URL,
     KIND_EVENTS,
     KIND_NEWS,
 )
 
 
-def _rss_xml(items, title="Mi Feed"):
+def _rss_xml(items, title="My Feed"):
     entries = "\n".join(
         f"""
         <item>
           <title>{item['title']}</title>
-          <link>https://ejemplo.org/{item['slug']}</link>
+          <link>https://example.org/{item['slug']}</link>
           <description>{item.get('summary', '')}</description>
           <pubDate>{item['pubdate']}</pubDate>
         </item>"""
@@ -30,7 +29,7 @@ def _rss_xml(items, title="Mi Feed"):
     return (
         f'<?xml version="1.0" encoding="UTF-8"?>'
         f'<rss version="2.0"><channel>'
-        f"<title>{title}</title><link>https://ejemplo.org</link>"
+        f"<title>{title}</title><link>https://example.org</link>"
         f"{entries}</channel></rss>"
     ).encode()
 
@@ -57,24 +56,24 @@ def _close(client):
     _run(client.aclose())
 
 
-def test_async_fetch_feeds_crea_secciones_news_y_events():
+def test_async_fetch_feeds_creates_news_and_events_sections():
     now = datetime.now(timezone.utc)
     news_xml = _rss_xml(
         [
             {
-                "title": "Abre una panadería en el centro",
-                "slug": "panaderia",
+                "title": "A bakery opens downtown",
+                "slug": "bakery",
                 "pubdate": _pubdate(now - timedelta(hours=1)),
-                "summary": "Nota de prensa del ayuntamiento.",
+                "summary": "Press release from the city council.",
             }
         ],
-        title="Noticias",
+        title="News",
     )
     events_xml = _rss_xml(
         [
             {
-                "title": "Concierto en la plaza mayor",
-                "slug": "concierto",
+                "title": "Concert at the main square",
+                "slug": "concert",
                 "pubdate": _pubdate(now - timedelta(hours=2)),
             }
         ],
@@ -82,43 +81,43 @@ def test_async_fetch_feeds_crea_secciones_news_y_events():
     )
 
     def handler(request):
-        if "noticias" in str(request.url):
+        if "news" in str(request.url):
             return httpx.Response(200, content=news_xml)
         return httpx.Response(200, content=events_xml)
 
     client = _mock_client(handler)
     feeds = [
-        _feed("https://ejemplo.org/noticias.xml", kind=KIND_NEWS, tags=["ciudad"]),
-        _feed("https://ejemplo.org/agenda.xml", kind=KIND_EVENTS),
+        _feed("https://example.org/news.xml", kind=KIND_NEWS, tags=["city"]),
+        _feed("https://example.org/agenda.xml", kind=KIND_EVENTS),
     ]
     sections = _run(rss.async_fetch_feeds(None, feeds, client=client))
     _close(client)
 
     assert len(sections[KIND_NEWS]) == 1
     item = sections[KIND_NEWS][0]
-    assert item["title"] == "Abre una panadería en el centro"
-    assert item["summary"] == "Nota de prensa del ayuntamiento."
-    assert item["link"] == "https://ejemplo.org/panaderia"
+    assert item["title"] == "A bakery opens downtown"
+    assert item["summary"] == "Press release from the city council."
+    assert item["link"] == "https://example.org/bakery"
     assert item["published"]
-    assert item["source"] == "Noticias"
-    assert item["tags"] == ["ciudad"]
+    assert item["source"] == "News"
+    assert item["tags"] == ["city"]
     assert len(sections[KIND_EVENTS]) == 1
-    assert sections[KIND_EVENTS][0]["title"] == "Concierto en la plaza mayor"
-    json.dumps(sections)  # debe ser serializable
+    assert sections[KIND_EVENTS][0]["title"] == "Concert at the main square"
+    json.dumps(sections)  # must be serializable
 
 
-def test_async_fetch_feeds_filtra_por_antiguedad():
+def test_async_fetch_feeds_filters_by_age():
     now = datetime.now(timezone.utc)
     xml = _rss_xml(
         [
             {
-                "title": "Noticia reciente",
-                "slug": "reciente",
+                "title": "Recent story",
+                "slug": "recent",
                 "pubdate": _pubdate(now - timedelta(hours=2)),
             },
             {
-                "title": "Noticia muy antigua",
-                "slug": "antigua",
+                "title": "Very old story",
+                "slug": "old",
                 "pubdate": _pubdate(now - timedelta(days=10)),
             },
         ]
@@ -128,66 +127,66 @@ def test_async_fetch_feeds_filtra_por_antiguedad():
         return httpx.Response(200, content=xml)
 
     client = _mock_client(handler)
-    feeds = [_feed("https://ejemplo.org/feed.xml", max_age_hours=6)]
+    feeds = [_feed("https://example.org/feed.xml", max_age_hours=6)]
     sections = _run(rss.async_fetch_feeds(None, feeds, client=client))
     _close(client)
 
     titles = [item["title"] for item in sections[KIND_NEWS]]
-    assert titles == ["Noticia reciente"]
+    assert titles == ["Recent story"]
 
 
-def test_parse_feed_content_dedup_y_limite():
+def test_parse_feed_content_dedup_and_limit():
     now = datetime.now(timezone.utc)
     xml = _rss_xml(
         [
             {
-                "title": "Título Repetido.",
+                "title": "Repeated Title.",
                 "slug": "a",
                 "pubdate": _pubdate(now - timedelta(hours=1)),
             },
             {
-                "title": "título repetido",
+                "title": "repeated title",
                 "slug": "b",
                 "pubdate": _pubdate(now - timedelta(hours=1)),
             },
             {
-                "title": "Tercera noticia",
+                "title": "Third story",
                 "slug": "c",
                 "pubdate": _pubdate(now - timedelta(hours=1)),
             },
         ]
     )
-    feed = _feed("https://ejemplo.org/feed.xml", max_items=2)
+    feed = _feed("https://example.org/feed.xml", max_items=2)
     items = rss.parse_feed_content(xml, feed)
-    assert [item["title"] for item in items] == ["Título Repetido.", "Tercera noticia"]
+    assert [item["title"] for item in items] == ["Repeated Title.", "Third story"]
 
 
-def test_async_fetch_feeds_tolera_feed_caido(caplog):
+def test_async_fetch_feeds_tolerates_down_feed(caplog):
     def handler(request):
         return httpx.Response(500)
 
     client = _mock_client(handler)
-    feeds = [_feed("https://ejemplo.org/roto.xml")]
+    feeds = [_feed("https://example.org/down.xml")]
     sections = _run(rss.async_fetch_feeds(None, feeds, client=client))
     _close(client)
 
     assert sections[KIND_NEWS] == []
     assert sections[KIND_EVENTS] == []
-    assert "Feed caído" in caplog.text
+    assert "Feed failed" in caplog.text
 
 
-def test_async_fetch_feeds_tolera_xml_invalido():
+def test_async_fetch_feeds_tolerates_invalid_xml():
     def handler(request):
-        return httpx.Response(200, content=b"esto no es xml")
+        return httpx.Response(200, content=b"this is not xml")
 
     client = _mock_client(handler)
-    feeds = [_feed("https://ejemplo.org/mal.xml")]
+    feeds = [_feed("https://example.org/bad.xml")]
     sections = _run(rss.async_fetch_feeds(None, feeds, client=client))
     _close(client)
 
     assert sections[KIND_NEWS] == []
 
 
-def test_async_fetch_feeds_sin_feeds():
+def test_async_fetch_feeds_without_feeds():
     sections = _run(rss.async_fetch_feeds(None, []))
     assert sections == {KIND_NEWS: [], KIND_EVENTS: []}

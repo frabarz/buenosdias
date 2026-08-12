@@ -1,4 +1,4 @@
-"""Clientes LLM: agente de conversación de HA y endpoints OpenAI-compatibles."""
+"""LLM clients: HA conversation agent and OpenAI-compatible endpoints."""
 
 from __future__ import annotations
 
@@ -27,22 +27,22 @@ CHAT_COMPLETIONS_PATH = "/chat/completions"
 
 
 class LLMError(Exception):
-    """Error al completar una petición LLM."""
+    """Error completing an LLM request."""
 
 
 class LLMClient(ABC):
-    """Interfaz de un cliente LLM."""
+    """Interface of an LLM client."""
 
     @abstractmethod
     async def async_complete(self, system: str, user: str) -> str:
-        """Devuelve la respuesta del modelo para los prompts system/user."""
+        """Return the model response for the system/user prompts."""
 
 
 class HAConversationLLM(LLMClient):
-    """Llama al agente de conversación de HA vía conversation.async_converse.
+    """Calls HA's conversation agent via conversation.async_converse.
 
-    Requiere HA >= 2025.2 (la firma de ``async_converse`` no tenía el
-    parámetro ``extra_system_prompt`` antes de esa versión).
+    Requires HA >= 2025.2 (the ``async_converse`` signature had no
+    ``extra_system_prompt`` parameter before that version).
     """
 
     def __init__(self, hass: Any, agent: str = "") -> None:
@@ -65,19 +65,19 @@ class HAConversationLLM(LLMClient):
                 extra_system_prompt=system,  # type: ignore[call-arg]
             )
         except Exception as err:
-            msg = f"agente de conversación falló: {err}"
+            msg = f"conversation agent failed: {err}"
             raise LLMError(msg) from err
 
         speech: dict = (result.response.speech or {}).get("plain") or {}
         text = speech.get("speech", "")
         if not text:
-            msg = "el agente de conversación no devolvió texto"
+            msg = "conversation agent returned no text"
             raise LLMError(msg)
         return text
 
 
 class OpenAICompatLLM(LLMClient):
-    """LLM vía un endpoint /chat/completions compatible con OpenAI."""
+    """LLM via an OpenAI-compatible /chat/completions endpoint."""
 
     def __init__(
         self,
@@ -112,18 +112,18 @@ class OpenAICompatLLM(LLMClient):
                 response.raise_for_status()
                 data = response.json()
         except Exception as err:
-            msg = f"endpoint OpenAI falló: {err}"
+            msg = f"OpenAI endpoint failed: {err}"
             raise LLMError(msg) from err
 
         try:
             return data["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as err:
-            msg = f"respuesta OpenAI inválida: {data}"
+            msg = f"invalid OpenAI response: {data}"
             raise LLMError(msg) from err
 
 
 class FallbackLLM(LLMClient):
-    """Prueba el primario y, si falla, delega en el de respaldo."""
+    """Tries the primary and, on failure, delegates to the fallback."""
 
     def __init__(self, primary: LLMClient, fallback: LLMClient) -> None:
         self.primary = primary
@@ -133,12 +133,12 @@ class FallbackLLM(LLMClient):
         try:
             return await self.primary.async_complete(system, user)
         except LLMError as err:
-            _LOGGER.warning("LLM primario falló, usando respaldo: %s", err)
+            _LOGGER.warning("Primary LLM failed, using fallback: %s", err)
             return await self.fallback.async_complete(system, user)
 
 
 def build_llm(hass: Any, config: dict) -> LLMClient:
-    """Construye el cliente LLM según la configuración, con fallback al otro modo."""
+    """Build the LLM client from the configuration, falling back to the other mode."""
     llm_cfg = config.get(CONF_LLM, {})
     openai_cfg = llm_cfg.get(CONF_OPENAI, {})
     ha_llm = HAConversationLLM(hass, llm_cfg.get(CONF_AGENT, ""))
