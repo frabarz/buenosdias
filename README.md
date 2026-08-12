@@ -30,20 +30,23 @@ servers:
 
 Pipeline and modules:
 
-```
-                ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-  HA states ───▶│  sources.py  │──▶│  script.py   │──▶│  speak.py    │──▶ TTS
-  RSS feeds ───▶│ (context)    │   │ (LLM + valid)│   │ (media_player│
-                └──────────────┘   └──────────────┘   └──────────────┘
-                       ▲                  │  ▲                 │
-                       │            coordinator.async_run     │
-                       │                  │  └────────────────┘
-                 scheduler.py ◀───────────┘
-                 (async_track_utc_time_change)
-                       │
-                  state.py (storage.Store)
-                       │
-              switch.py / sensor.py (entities)
+```mermaid
+flowchart TD
+    subgraph Pipeline["coordinator.async_run: daily pipeline"]
+        SRC["sources.py<br/>(context)"]
+        SCR["script.py<br/>(LLM + validation)"]
+        SPK["speak.py<br/>(media_player)"]
+        SRC --> SCR --> SPK
+    end
+
+    HA["HA entity states"] --> SRC
+    RSS["RSS feeds"] --> SRC
+    SPK --> TTS["TTS engine"]
+
+    SCHED["scheduler.py<br/>(async_track_utc_time_change)"] -->|triggers| Pipeline
+    SCHED -->|reads "already emitted"| ST["state.py<br/>(storage.Store)"]
+    Pipeline -->|marks emitted| ST
+    ST --> ENT["switch.py / sensor.py<br/>(entities)"]
 ```
 
 | Module | Responsibility |
