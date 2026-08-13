@@ -90,13 +90,13 @@ nix develop
 pytest -q
 ```
 
-**Alternative (pip venv)**:
+**Alternative (uv)**:
 
 ```sh
-python -m venv .venv
-.venv/bin/pip install -e .
-.venv/bin/pip install pytest "homeassistant>=2025.2"
-.venv/bin/python -m pytest -q
+uv venv .venv
+.venv/bin/uv pip install -e .
+.venv/bin/uv pip install pytest "homeassistant>=2025.2"
+.venv/bin/uv run python -m pytest -q
 ```
 
 The suite uses a lightweight harness (`tests/conftest.py`) with a `fake_hass`
