@@ -1,8 +1,10 @@
-"""Persistence of the alarm state with hass.helpers.storage.Store."""
+"""Persistence of the alarm state with homeassistant.helpers.storage.Store."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+
+from homeassistant.helpers.storage import Store
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -26,7 +28,7 @@ class StateStore:
         store: Any | None = None,
     ) -> None:
         self._hass = hass
-        self._store = store or hass.helpers.storage.Store(hass, 1, store_key)
+        self._store = store or Store(hass, 1, store_key)
         self._data: dict[str, str | None] = {
             "last_emission_date": None,
             "last_result": None,

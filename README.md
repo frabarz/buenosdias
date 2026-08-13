@@ -58,7 +58,7 @@ flowchart TD
 | `script.py` | Script generation and validation (non-empty, ≤ `max_chars`, no markdown, single retry). |
 | `speak.py` | `async_speak`: `media_player` power-on, volume and `tts.speak` with `blocking=True`. |
 | `coordinator.py` | `async_run(hass, config, emit)` — context → script → TTS pipeline. |
-| `state.py` | `StateStore` on top of `hass.helpers.storage.Store` (`last_emission_date`, `last_result`, `next_alarm`). |
+| `state.py` | `StateStore` on top of `homeassistant.helpers.storage.Store` (`last_emission_date`, `last_result`, `next_alarm`). |
 | `scheduler.py` | Daily trigger, skip rules and next alarm computation. |
 | `switch.py` / `sensor.py` | Entity platforms. |
 

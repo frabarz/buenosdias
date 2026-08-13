@@ -63,6 +63,11 @@ def fake_trackers(monkeypatch):
     monkeypatch.setattr(
         "homeassistant.helpers.discovery.async_load_platform", fake_load_platform
     )
+
+    def fake_store_factory(hass, version, key):
+        return FakeStore()
+
+    monkeypatch.setattr("custom_components.buenosdias.state.Store", fake_store_factory)
     return SimpleNamespace(
         track_calls=track_calls,
         load_platform_calls=load_platform_calls,
