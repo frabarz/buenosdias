@@ -9,6 +9,7 @@ import httpx
 
 from custom_components.buenosdias import rss
 from custom_components.buenosdias.const import (
+    CONF_EXCLUDE,
     CONF_URL,
     KIND_EVENTS,
     KIND_NEWS,
@@ -159,6 +160,79 @@ def test_parse_feed_content_dedup_and_limit():
     feed = _feed("https://example.org/feed.xml", max_items=2)
     items = rss.parse_feed_content(xml, feed)
     assert [item["title"] for item in items] == ["Repeated Title.", "Third story"]
+
+
+def test_parse_feed_content_filters_excluded_keywords():
+    now = datetime.now(timezone.utc)
+    xml = _rss_xml(
+        [
+            {
+                "title": "Fútbol: el clásico terminó en empate",
+                "slug": "a",
+                "pubdate": _pubdate(now - timedelta(hours=1)),
+            },
+            {
+                "title": "Farándula: boda de una figura de la TV",
+                "slug": "b",
+                "pubdate": _pubdate(now - timedelta(hours=1)),
+            },
+            {
+                "title": "City council approves budget",
+                "slug": "c",
+                "pubdate": _pubdate(now - timedelta(hours=1)),
+            },
+        ]
+    )
+    feed = _feed(
+        "https://example.org/feed.xml",
+        **{CONF_EXCLUDE: ["futbol", "farándula"]},
+    )
+    items = rss.parse_feed_content(xml, feed)
+    assert [item["title"] for item in items] == ["City council approves budget"]
+
+
+def test_parse_feed_content_matches_exclude_in_summary():
+    now = datetime.now(timezone.utc)
+    xml = _rss_xml(
+        [
+            {
+                "title": "Youth league wraps up season",
+                "slug": "a",
+                "pubdate": _pubdate(now - timedelta(hours=1)),
+                "summary": "Resultados del fútbol regional de la liga juvenil.",
+            },
+            {
+                "title": "New park opens downtown",
+                "slug": "b",
+                "pubdate": _pubdate(now - timedelta(hours=1)),
+            },
+        ]
+    )
+    feed = _feed(
+        "https://example.org/feed.xml",
+        **{CONF_EXCLUDE: ["futbol"]},
+    )
+    items = rss.parse_feed_content(xml, feed)
+    assert [item["title"] for item in items] == ["New park opens downtown"]
+
+
+def test_parse_feed_content_exclude_no_match_keeps_all():
+    now = datetime.now(timezone.utc)
+    xml = _rss_xml(
+        [
+            {
+                "title": "Regional weather outlook",
+                "slug": "a",
+                "pubdate": _pubdate(now - timedelta(hours=1)),
+            },
+        ]
+    )
+    feed = _feed(
+        "https://example.org/feed.xml",
+        **{CONF_EXCLUDE: ["cosmos"]},
+    )
+    items = rss.parse_feed_content(xml, feed)
+    assert [item["title"] for item in items] == ["Regional weather outlook"]
 
 
 def test_async_fetch_feeds_tolerates_down_feed(caplog):

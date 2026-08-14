@@ -1,0 +1,196 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Buenos Días",
+        "description": "Configure the LLM that writes the morning radio script.",
+        "data": {
+          "mode": "LLM mode",
+          "agent": "Conversation agent",
+          "base_url": "Base URL",
+          "model": "Model",
+          "api_key": "API key"
+        },
+        "data_description": {
+          "agent": "The conversation agent entity to use for the primary mode, e.g. conversation.assist.",
+          "base_url": "OpenAI-compatible endpoint, e.g. http://localhost:11434/v1 or https://openrouter.ai/api/v1.",
+          "model": "Model name used by the endpoint (only for OpenAI-compatible mode).",
+          "api_key": "Optional. Required for cloud providers such as OpenRouter or Groq."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure the LLM connection",
+        "description": "The API key is left empty to keep the stored one."
+      },
+      "reauth_confirm": {
+        "title": "Reauthentication required",
+        "description": "The stored API key is no longer valid. Enter a new API key."
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the endpoint. Check the URL and network access.",
+      "invalid_auth": "The API key is invalid or has no access to the endpoint.",
+      "unknown": "Unexpected error while validating the connection.",
+      "invalid_url": "The base URL is not a valid URL.",
+      "missing_base_url": "A base URL is required in OpenAI-compatible mode."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Buenos Días options",
+        "description": "Choose which part of the configuration to edit. The LLM connection is edited through the Reconfigure step in the integration overview.",
+        "menu_options": {
+          "llm": "LLM",
+          "tts": "TTS and player",
+          "sources": "Sources",
+          "rss_feeds": "RSS feeds",
+          "schedule": "Schedule",
+          "persona": "Persona"
+        }
+      },
+      "llm": {
+        "title": "LLM options",
+        "description": "Max output length of the generated script. The connection settings are edited through Reconfigure.",
+        "data": {
+          "max_chars": "Maximum script length (characters)"
+        }
+      },
+      "tts": {
+        "title": "TTS and media player",
+        "data": {
+          "entity_id": "TTS entity",
+          "media_player": "Media player",
+          "language": "Language",
+          "volume": "Volume",
+          "restore_volume": "Restore previous volume"
+        },
+        "data_description": {
+          "entity_id": "The text-to-speech engine entity, e.g. tts.piper.",
+          "media_player": "The speaker the morning radio plays on.",
+          "volume": "Volume level used while playing (0.0-1.0)."
+        }
+      },
+      "sources": {
+        "title": "Sources",
+        "description": "The weather, calendar and sensors read each morning. The RSS feeds (news and events) are edited separately.",
+        "data": {
+          "weather": "Weather",
+          "calendar": "Calendar",
+          "sensors": "Sensors"
+        },
+        "data_description": {
+          "weather": "Weather entities to include in the context.",
+          "calendar": "Calendar entities to include in the context.",
+          "sensors": "Sensor entities to include in the context."
+        }
+      },
+      "rss_feeds": {
+        "title": "RSS feeds",
+        "description": "Add, edit or remove RSS feeds (city news and events).",
+        "menu_options": {
+          "add_feed": "Add feed"
+        }
+      },
+      "rss_feed": {
+        "title": "RSS feed",
+        "menu_options": {
+          "rss_edit": "Edit",
+          "rss_remove": "Remove"
+        }
+      },
+      "rss_add": {
+        "title": "Add RSS feed",
+        "data": {
+          "url": "Feed URL",
+          "kind": "Kind",
+          "max_age_hours": "Max age (hours)",
+          "max_items": "Max items",
+          "tags": "Tags",
+          "exclude": "Excluded keywords"
+        },
+        "data_description": {
+          "kind": "news feeds are reported as news; events as today's events.",
+          "tags": "Optional keywords that describe the feed.",
+          "exclude": "Comma or newline separated keywords. Entries whose title or summary contains any of them are skipped, e.g. football, gossip."
+        }
+      },
+      "rss_edit": {
+        "title": "Edit RSS feed",
+        "data": {
+          "url": "Feed URL",
+          "kind": "Kind",
+          "max_age_hours": "Max age (hours)",
+          "max_items": "Max items",
+          "tags": "Tags",
+          "exclude": "Excluded keywords"
+        },
+        "data_description": {
+          "exclude": "Comma or newline separated keywords. Entries whose title or summary contains any of them are skipped, e.g. football, gossip."
+        }
+      },
+      "rss_remove": {
+        "title": "Remove RSS feed",
+        "description": "Remove the feed '{name}'.",
+        "data": {
+          "confirm_remove": "Remove this feed"
+        }
+      },
+      "schedule": {
+        "title": "Schedule",
+        "data": {
+          "time": "Alarm time",
+          "time_entity": "Time entity",
+          "skip_days": "Skip weekdays",
+          "feriados": "Holidays (one per line)",
+          "skip_if_emitted": "Skip if already emitted"
+        },
+        "data_description": {
+          "time": "Fixed alarm time (HH:MM). Ignored when a time entity is set.",
+          "time_entity": "Optional sensor that provides the alarm time dynamically, e.g. your phone's alarm sensor.",
+          "feriados": "Dates on which the alarm is skipped, one ISO date (YYYY-MM-DD) per line."
+        }
+      },
+      "persona": {
+        "title": "Persona",
+        "description": "The persona fully controls the language and style of the spoken script."
+      }
+    },
+    "error": {
+      "invalid_feed_url": "The feed URL is not valid.",
+      "invalid_date": "Please enter one ISO date (YYYY-MM-DD) per line.",
+      "invalid_feed_index": "The selected feed no longer exists."
+    }
+  },
+  "selector": {
+    "llm_mode": {
+      "options": {
+        "ha_conversation": "Home Assistant conversation agent",
+        "openai_compatible": "OpenAI-compatible endpoint"
+      }
+    },
+    "weekday": {
+      "options": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      }
+    },
+    "feed_kind": {
+      "options": {
+        "news": "News",
+        "events": "Events"
+      }
+    }
+  }
+}

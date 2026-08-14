@@ -10,6 +10,7 @@ from .const import (
     CONF_BASE_URL,
     CONF_CALENDAR,
     CONF_ENTITY_ID,
+    CONF_EXCLUDE,
     CONF_FEEDS,
     CONF_FERIADOS,
     CONF_KIND,
@@ -112,6 +113,9 @@ RSS_FEED_SCHEMA = vol.Schema(
             vol.Range(min=1, max=50),
         ),
         vol.Optional(CONF_TAGS, default=[]): vol.All(
+            [vol.All(str, vol.Length(min=1))],
+        ),
+        vol.Optional(CONF_EXCLUDE, default=[]): vol.All(
             [vol.All(str, vol.Length(min=1))],
         ),
     },

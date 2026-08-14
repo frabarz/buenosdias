@@ -72,7 +72,7 @@ The minimum supported HA version is **2025.2** (it introduces
 flake.nix                     # NixOS flake (overlay + packages + devShell + checks)
 nixos/overlay.nix             # buildHomeAssistantComponent → home-assistant-custom-components.buenosdias
 nixos/example.nix             # Usage example in a NixOS module
-config.example.yaml           # Documented example YAML configuration
+config.example.yaml           # Legacy YAML config (deprecated migration path only)
 custom_components/buenosdias/ # The integration (HA code)
 tests/                        # pytest suite
 pyproject.toml                # Packaging for development/venv
@@ -99,12 +99,24 @@ uv venv .venv
 .venv/bin/uv run python -m pytest -q
 ```
 
-The suite uses a lightweight harness (`tests/conftest.py`) with a `fake_hass`
-that substitutes HA (no real events, no network I/O).
+The suite combines a lightweight harness (`tests/conftest.py`) with a
+`fake_hass` for unit-level tests, and `pytest-homeassistant-custom-component`
+for real `hass` fixtures that exercise the config flow end to end.
 
-## Usage (Internal)
+## Usage
 
-The integration is invoked through HA services:
+Configuration is done through a **UI config flow** (Settings → Devices &
+Services → Add Integration → "Buenos Días"): an initial form for the LLM
+connection, then an options flow to tune TTS, sources (weather, calendar,
+sensors, RSS feeds), the schedule and the persona. The API key stays in the
+entry `data` and is never logged or exposed via options.
+
+Legacy YAML (`config.example.yaml`) is deprecated: a `buenosdias:` block only
+triggers a one-time import into a config entry at startup (see `async_setup`
+in `__init__.py` and `async_step_import` in `config_flow.py`). Remove it once
+the entry exists.
+
+The integration is then invoked through HA services:
 
 - `buenosdias.context` — returns the collected context (JSON).
 - `buenosdias.generate` — generates the script without playing it (dry-run).

@@ -1,7 +1,7 @@
 """Constants of the buenosdias integration."""
 
 DOMAIN = "buenosdias"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 CONF_LLM = "llm"
 CONF_TTS = "tts"
@@ -34,6 +34,8 @@ CONF_KIND = "kind"
 CONF_MAX_AGE_HOURS = "max_age_hours"
 CONF_MAX_ITEMS = "max_items"
 CONF_TAGS = "tags"
+CONF_EXCLUDE = "exclude"
+CONF_CONFIRM_REMOVE = "confirm_remove"
 
 KIND_NEWS = "news"
 KIND_EVENTS = "events"

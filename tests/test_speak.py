@@ -28,8 +28,12 @@ def _config(**tts):
 
 def _mp_state(state="on", volume=0.8):
     from conftest import FakeState
+    from homeassistant.components.media_player import MediaPlayerEntityFeature
 
-    return FakeState(state, {"volume_level": volume})
+    return FakeState(
+        state,
+        {"volume_level": volume, "supported_features": int(MediaPlayerEntityFeature.TURN_ON)},
+    )
 
 
 def test_async_speak_sets_and_restores_volume(fake_hass):

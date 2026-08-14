@@ -1,8 +1,20 @@
 """Shared helpers for the buenosdias tests."""
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+
+
+@pytest.fixture
+def hass_config_dir(hass_tmp_config_dir, request):
+    """Point the HA test instance at this repo's custom_components."""
+    repo_components = Path(__file__).resolve().parent.parent / "custom_components"
+    target = Path(hass_tmp_config_dir) / "custom_components" / "buenosdias"
+    if not target.exists():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.symlink_to(repo_components / "buenosdias", target_is_directory=True)
+    return hass_tmp_config_dir
 
 
 class FakeState:
@@ -75,6 +87,24 @@ def fake_trackers(monkeypatch):
     )
 
 
+class FakeEntry:
+    """Minimal config entry stub."""
+
+    def __init__(self, entry_id="entry-1", domain="buenosdias", data=None, options=None):
+        self.entry_id = entry_id
+        self.domain = domain
+        self.data = data or {}
+        self.options = options or {}
+        self.listeners = []
+        self.reauth_started = False
+
+    def add_update_listener(self, callback):
+        self.listeners.append(callback)
+
+    def async_start_reauth(self, hass, context=None, data=None):
+        self.reauth_started = True
+
+
 @pytest.fixture
 def fake_hass():
     """Return a simplified hass that registers services in `registered`."""
@@ -83,6 +113,7 @@ def fake_hass():
         registered = {}
         calls = []
         state_dict = dict(states or {})
+        entries = []
 
         def fake_register(domain, service, func, schema=None, supports_response=None):
             registered[(domain, service)] = func
@@ -97,6 +128,37 @@ def fake_hass():
         def fake_async_create_task(coro, name=None):
             return coro
 
+        def fake_async_remove(domain, service):
+            registered.pop((domain, service), None)
+
+        def fake_has_entries(domain):
+            return any(getattr(e, "domain", None) == domain for e in entries)
+
+        async def fake_forward_entry_setups(entry, platforms):
+            calls.append(("__forward__", entry.entry_id, list(platforms)))
+
+        async def fake_unload_platforms(entry, platforms):
+            calls.append(("__unload__", entry.entry_id, list(platforms)))
+
+        async def fake_reload(entry_id):
+            calls.append(("__reload__", entry_id))
+
+        config_entries_calls = []
+
+        def fake_flow_init(*args, **kwargs):
+            config_entries_calls.append(("__flow_init__", args, kwargs))
+            return None
+
+        config_entries = SimpleNamespace(
+            entries=entries,
+            async_has_entries=fake_has_entries,
+            async_forward_entry_setups=fake_forward_entry_setups,
+            async_unload_platforms=fake_unload_platforms,
+            async_reload=fake_reload,
+            flow=SimpleNamespace(async_init=fake_flow_init),
+            _calls=config_entries_calls,
+        )
+
         hass = SimpleNamespace(
             data={},
             states=SimpleNamespace(
@@ -105,17 +167,21 @@ def fake_hass():
                 as_dict=lambda: dict(state_dict),
             ),
             services=SimpleNamespace(
-                async_register=fake_register, async_call=fake_async_call
+                async_register=fake_register,
+                async_call=fake_async_call,
+                async_remove=fake_async_remove,
             ),
             helpers=SimpleNamespace(
                 storage=SimpleNamespace(
                     Store=lambda hass, version, key: FakeStore()
                 )
             ),
+            config_entries=config_entries,
             async_create_task=fake_async_create_task,
         )
         hass.calls = calls
         hass.state_dict = state_dict
+        hass.registered = registered
         return hass, registered
 
     return _make

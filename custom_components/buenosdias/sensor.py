@@ -17,13 +17,12 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: dict,
+    entry: Any,
     async_add_entities: Any,
-    discovery_info: Any = None,
-) -> None:
-    """Register the alarm status sensors."""
+) -> bool:
+    """Register the alarm status sensors from a config entry."""
     store: StateStore = hass.data[DOMAIN]["store"]
     sensors = [
         BuenosdiasLastStatusSensor(hass, store),
@@ -31,6 +30,7 @@ async def async_setup_platform(
     ]
     hass.data[DOMAIN]["entities"].extend(sensors)
     async_add_entities(sensors)
+    return True
 
 
 class BuenosdiasLastStatusSensor(SensorEntity):

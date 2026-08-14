@@ -5,14 +5,21 @@ spoken alarm, with no external services.
 
 ## Quick Start
 
-1. Copy `custom_components/buenosdias/` to your `custom_components/`.
-2. Add the `buenosdias:` block to your `configuration.yaml` (full example in
-   [config.example.yaml](config.example.yaml)).
-3. Restart HA. From Developer Tools → Services try:
+1. Copy `custom_components/buenosdias/` to your `custom_components/` (or use
+   the NixOS flake below) and restart HA.
+2. **Settings → Devices & Services → Add Integration → "Buenos Días"**, fill in
+   the LLM connection, then open Options to tune TTS, sources, schedule and
+   persona.
+3. From Developer Tools → Services try:
 
    - `buenosdias.generate` — generates the script (dry-run).
    - `buenosdias.emit` — gathers context, generates and plays it over the
      speaker.
+
+> **Migrating from YAML?** v0.2.0 dropped YAML configuration. A legacy
+> `buenosdias:` block in `configuration.yaml` now only triggers a one-time
+> import into a config entry at startup. Keep it, restart HA, confirm the
+> import dialog, then remove the block and finish the setup in the UI.
 
 ## Requirements
 
@@ -50,38 +57,30 @@ cp -r buenosdias/custom_components/buenosdias <hass_config>/custom_components/
 
 ## Configuration
 
-Minimal example:
+Setup is done through the **UI config flow**. The initial form asks for the
+LLM connection (`ha_conversation` agent or an OpenAI-compatible endpoint). The
+**Options** menu then covers, section by section:
 
-```yaml
-buenosdias:
-  llm:
-    mode: ha_conversation          # or "openai_compatible"
-  tts:
-    entity_id: tts.piper
-    media_player: media_player.sala
-    language: es-ES
-  sources:
-    weather: [weather.casa]
-    calendar: [calendar.familia]
-  schedule:
-    time: "07:00"
-    skip_days: [sat, sun]
-```
+- **LLM** — max chars per script, and the connection itself.
+- **TTS** — TTS engine, media player, language, volume, restore volume.
+- **Sources** — weather, calendar and sensor entities, plus RSS feeds.
+- **Schedule** — alarm time (or a `time_entity`), skip days, `feriados`,
+  `skip_if_emitted`.
+- **Persona** — free-text prompt controlling the script's language and style.
 
-API keys always via `!secret` (see `config.example.yaml`).
+API keys are stored in the config entry `data` (never in options, never
+logged). The full equivalent of the old YAML block is shown in
+[config.example.yaml](config.example.yaml) purely as an import/migration
+reference.
 
 ## Language
 
 The script is written in whatever language and style your **persona** defines.
-Set `buenosdias.persona` in your configuration to control it, e.g. a Spanish
-persona produces a Spanish morning show:
+Set the persona in the integration **Options → Persona** to control it, e.g. a
+Spanish persona produces a Spanish morning show:
 
-```yaml
-buenosdias:
-  persona: |
-    Eres el locutor de una radio matutina. Habla en español de España, con
-    tono cercano y natural. Redacta un breve guion hablado.
-```
+> Eres el locutor de una radio matutina. Habla en español de España, con tono
+> cercano y natural. Redacta un breve guion hablado.
 
 ## Services
 

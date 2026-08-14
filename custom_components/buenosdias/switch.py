@@ -15,16 +15,16 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: dict,
+    entry: Any,
     async_add_entities: Any,
-    discovery_info: Any = None,
-) -> None:
-    """Register the alarm enable switch."""
+) -> bool:
+    """Register the alarm enable switch from a config entry."""
     switch = BuenosdiasEnabledSwitch(hass)
     hass.data[DOMAIN]["entities"].append(switch)
     async_add_entities([switch])
+    return True
 
 
 class BuenosdiasEnabledSwitch(SwitchEntity):

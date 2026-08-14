@@ -3,8 +3,8 @@
 import asyncio
 from datetime import date, datetime, timezone
 
-from custom_components.buenosdias import async_setup
-from custom_components.buenosdias.const import CONF_TIME_ENTITY, DOMAIN
+from custom_components.buenosdias import async_setup_entry
+from custom_components.buenosdias.const import CONF_SCHEDULE, CONF_TIME, CONF_TIME_ENTITY, DOMAIN
 from custom_components.buenosdias import scheduler
 from custom_components.buenosdias.scheduler import (
     next_fire_time,
@@ -13,11 +13,9 @@ from custom_components.buenosdias.scheduler import (
     should_fire,
 )
 
-CONF_SCHEDULE = "schedule"
 CONF_SKIP_DAYS = "skip_days"
 CONF_FERIADOS = "feriados"
 CONF_SKIP_IF_EMITTED = "skip_if_emitted"
-CONF_TIME = "time"
 
 
 def _now():
@@ -207,27 +205,32 @@ def test_async_setup_scheduler_registers_time(fake_trackers):
     }
 
 
-def test_async_setup_configures_scheduler_and_platforms(fake_hass, fake_trackers):
+def test_async_setup_entry_configures_scheduler(fake_hass, fake_trackers):
+    from conftest import FakeEntry
+
     hass, _ = fake_hass()
     asyncio.run(
-        async_setup(hass, {DOMAIN: {"schedule": {CONF_TIME: "06:30"}}})
+        async_setup_entry(
+            hass,
+            FakeEntry(options={CONF_SCHEDULE: {CONF_TIME: "06:30"}}),
+        )
     )
     assert fake_trackers.track_calls[-1]["hour"] == 6
     assert fake_trackers.track_calls[-1]["minute"] == 30
-    assert ("switch", DOMAIN) in fake_trackers.load_platform_calls
-    assert ("sensor", DOMAIN) in fake_trackers.load_platform_calls
 
 
 def test_async_setup_time_entity_arms_at_sensor_time(
     fake_hass, fake_trackers
 ):
+    from conftest import FakeEntry
+
     hass, _ = fake_hass(
         states={"sensor.alarm": type("S", (), {"state": "07:30"})()}
     )
     asyncio.run(
-        async_setup(
+        async_setup_entry(
             hass,
-            {DOMAIN: {"schedule": {CONF_TIME_ENTITY: "sensor.alarm"}}},
+            FakeEntry(options={CONF_SCHEDULE: {CONF_TIME_ENTITY: "sensor.alarm"}}),
         )
     )
     assert fake_trackers.track_calls[-1]["hour"] == 7
@@ -236,17 +239,21 @@ def test_async_setup_time_entity_arms_at_sensor_time(
 
 
 def test_async_setup_time_entity_missing_does_not_arm(fake_hass, fake_trackers):
+    from conftest import FakeEntry
+
     hass, _ = fake_hass()
     asyncio.run(
-        async_setup(
+        async_setup_entry(
             hass,
-            {DOMAIN: {"schedule": {CONF_TIME_ENTITY: "sensor.alarm"}}},
+            FakeEntry(options={CONF_SCHEDULE: {CONF_TIME_ENTITY: "sensor.alarm"}}),
         )
     )
     assert fake_trackers.track_calls == []
 
 
 def test_alarm_fires_and_marks_emitted(fake_hass, fake_trackers, monkeypatch):
+    from conftest import FakeEntry
+
     from custom_components.buenosdias import coordinator
 
     runs = []
@@ -258,7 +265,7 @@ def test_alarm_fires_and_marks_emitted(fake_hass, fake_trackers, monkeypatch):
     monkeypatch.setattr(coordinator, "async_run", fake_run)
 
     hass, _ = fake_hass()
-    asyncio.run(async_setup(hass, {DOMAIN: {}}))
+    asyncio.run(async_setup_entry(hass, FakeEntry(data={})))
     callback = fake_trackers.track_calls[-1]["callback"]
 
     now = datetime(2026, 8, 10, 6, 0, tzinfo=timezone.utc)
@@ -272,6 +279,8 @@ def test_alarm_fires_and_marks_emitted(fake_hass, fake_trackers, monkeypatch):
 
 
 def test_alarm_does_not_fire_when_disabled(fake_hass, fake_trackers, monkeypatch):
+    from conftest import FakeEntry
+
     from custom_components.buenosdias import coordinator
 
     runs = []
@@ -283,7 +292,7 @@ def test_alarm_does_not_fire_when_disabled(fake_hass, fake_trackers, monkeypatch
     monkeypatch.setattr(coordinator, "async_run", fake_run)
 
     hass, _ = fake_hass()
-    asyncio.run(async_setup(hass, {DOMAIN: {}}))
+    asyncio.run(async_setup_entry(hass, FakeEntry(data={})))
     hass.data[DOMAIN]["enabled"] = False
     callback = fake_trackers.track_calls[-1]["callback"]
 

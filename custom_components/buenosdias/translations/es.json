@@ -1,0 +1,196 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Buenos Días",
+        "description": "Configura el LLM que escribe el guion de la radio matutina.",
+        "data": {
+          "mode": "Modo de LLM",
+          "agent": "Agente de conversación",
+          "base_url": "URL base",
+          "model": "Modelo",
+          "api_key": "Clave de API"
+        },
+        "data_description": {
+          "agent": "La entidad del agente de conversación que se usará en el modo principal, p. ej. conversation.assist.",
+          "base_url": "Punto final compatible con OpenAI, p. ej. http://localhost:11434/v1 o https://openrouter.ai/api/v1.",
+          "model": "Nombre del modelo usado por el punto final (solo en modo compatible con OpenAI).",
+          "api_key": "Opcional. Obligatoria para proveedores en la nube como OpenRouter o Groq."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigurar la conexión del LLM",
+        "description": "Deje la clave de API vacía para conservar la almacenada."
+      },
+      "reauth_confirm": {
+        "title": "Se requiere autenticación",
+        "description": "La clave de API almacenada ya no es válida. Introduzca una clave de API nueva."
+      }
+    },
+    "error": {
+      "cannot_connect": "No se pudo conectar con el punto final. Compruebe la URL y el acceso a la red.",
+      "invalid_auth": "La clave de API no es válida o no tiene acceso al punto final.",
+      "unknown": "Error inesperado al validar la conexión.",
+      "invalid_url": "La URL base no es una URL válida.",
+      "missing_base_url": "Se necesita una URL base en modo compatible con OpenAI."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de Buenos Días",
+        "description": "Elija qué parte de la configuración desea editar. La conexión del LLM se edita mediante el paso Reconfigurar en la vista general de la integración.",
+        "menu_options": {
+          "llm": "LLM",
+          "tts": "TTS y reproductor",
+          "sources": "Fuentes",
+          "rss_feeds": "Fuentes RSS",
+          "schedule": "Programación",
+          "persona": "Persona"
+        }
+      },
+      "llm": {
+        "title": "Opciones del LLM",
+        "description": "Longitud máxima de salida del guion generado. La configuración de conexión se edita mediante Reconfigurar.",
+        "data": {
+          "max_chars": "Longitud máxima del guion (caracteres)"
+        }
+      },
+      "tts": {
+        "title": "TTS y reproductor de medios",
+        "data": {
+          "entity_id": "Entidad TTS",
+          "media_player": "Reproductor de medios",
+          "language": "Idioma",
+          "volume": "Volumen",
+          "restore_volume": "Restaurar el volumen anterior"
+        },
+        "data_description": {
+          "entity_id": "La entidad del motor de texto a voz, p. ej. tts.piper.",
+          "media_player": "El altavoz en el que se reproduce la radio matutina.",
+          "volume": "Nivel de volumen usado durante la reproducción (0,0-1,0)."
+        }
+      },
+      "sources": {
+        "title": "Fuentes",
+        "description": "El tiempo, el calendario y los sensores que se leen cada mañana. Las fuentes RSS (noticias y eventos) se editan por separado.",
+        "data": {
+          "weather": "Tiempo",
+          "calendar": "Calendario",
+          "sensors": "Sensores"
+        },
+        "data_description": {
+          "weather": "Entidades de tiempo que se incluirán en el contexto.",
+          "calendar": "Entidades de calendario que se incluirán en el contexto.",
+          "sensors": "Entidades de sensor que se incluirán en el contexto."
+        }
+      },
+      "rss_feeds": {
+        "title": "Fuentes RSS",
+        "description": "Añada, edite o elimine fuentes RSS (noticias y eventos de la ciudad).",
+        "menu_options": {
+          "add_feed": "Añadir fuente"
+        }
+      },
+      "rss_feed": {
+        "title": "Fuente RSS",
+        "menu_options": {
+          "rss_edit": "Editar",
+          "rss_remove": "Eliminar"
+        }
+      },
+      "rss_add": {
+        "title": "Añadir fuente RSS",
+        "data": {
+          "url": "URL de la fuente",
+          "kind": "Tipo",
+          "max_age_hours": "Edad máxima (horas)",
+          "max_items": "Máximo de elementos",
+          "tags": "Etiquetas",
+          "exclude": "Palabras clave a excluir"
+        },
+        "data_description": {
+          "kind": "las fuentes de noticias se informan como noticias; las de eventos, como eventos de hoy.",
+          "tags": "Palabras clave opcionales que describen la fuente.",
+          "exclude": "Palabras clave separadas por comas o líneas. Se omiten las entradas cuyo título o resumen contenga alguna de ellas, p. ej. fútbol, farándula."
+        }
+      },
+      "rss_edit": {
+        "title": "Editar fuente RSS",
+        "data": {
+          "url": "URL de la fuente",
+          "kind": "Tipo",
+          "max_age_hours": "Edad máxima (horas)",
+          "max_items": "Máximo de elementos",
+          "tags": "Etiquetas",
+          "exclude": "Palabras clave a excluir"
+        },
+        "data_description": {
+          "exclude": "Palabras clave separadas por comas o líneas. Se omiten las entradas cuyo título o resumen contenga alguna de ellas, p. ej. fútbol, farándula."
+        }
+      },
+      "rss_remove": {
+        "title": "Eliminar fuente RSS",
+        "description": "Elimine la fuente '{name}'.",
+        "data": {
+          "confirm_remove": "Eliminar esta fuente"
+        }
+      },
+      "schedule": {
+        "title": "Programación",
+        "data": {
+          "time": "Hora de la alarma",
+          "time_entity": "Entidad de hora",
+          "skip_days": "Días de la semana a omitir",
+          "feriados": "Festivos (uno por línea)",
+          "skip_if_emitted": "Omitir si ya se emitió"
+        },
+        "data_description": {
+          "time": "Hora fija de la alarma (HH:MM). Se ignora si hay una entidad de hora configurada.",
+          "time_entity": "Sensor opcional que proporciona la hora de la alarma de forma dinámica, p. ej. el sensor de alarma de su teléfono.",
+          "feriados": "Fechas en las que se omite la alarma, una fecha ISO (AAAA-MM-DD) por línea."
+        }
+      },
+      "persona": {
+        "title": "Persona",
+        "description": "La persona controla por completo el idioma y el estilo del guion hablado."
+      }
+    },
+    "error": {
+      "invalid_feed_url": "La URL de la fuente no es válida.",
+      "invalid_date": "Introduzca una fecha ISO (AAAA-MM-DD) por línea.",
+      "invalid_feed_index": "La fuente seleccionada ya no existe."
+    }
+  },
+  "selector": {
+    "llm_mode": {
+      "options": {
+        "ha_conversation": "Agente de conversación de Home Assistant",
+        "openai_compatible": "Punto final compatible con OpenAI"
+      }
+    },
+    "weekday": {
+      "options": {
+        "mon": "Lunes",
+        "tue": "Martes",
+        "wed": "Miércoles",
+        "thu": "Jueves",
+        "fri": "Viernes",
+        "sat": "Sábado",
+        "sun": "Domingo"
+      }
+    },
+    "feed_kind": {
+      "options": {
+        "news": "Noticias",
+        "events": "Eventos"
+      }
+    }
+  }
+}

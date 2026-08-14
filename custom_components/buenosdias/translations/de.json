@@ -1,0 +1,196 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Buenos Días",
+        "description": "Konfigurieren Sie das LLM, das das Morgenradio-Skript schreibt.",
+        "data": {
+          "mode": "LLM-Modus",
+          "agent": "Konversationsagent",
+          "base_url": "Basis-URL",
+          "model": "Modell",
+          "api_key": "API-Schlüssel"
+        },
+        "data_description": {
+          "agent": "Die Konversationsagent-Entität für den primären Modus, z. B. conversation.assist.",
+          "base_url": "OpenAI-kompatibler Endpunkt, z. B. http://localhost:11434/v1 oder https://openrouter.ai/api/v1.",
+          "model": "Modellname des Endpunkts (nur im OpenAI-kompatiblen Modus).",
+          "api_key": "Optional. Erforderlich für Cloud-Anbieter wie OpenRouter oder Groq."
+        }
+      },
+      "reconfigure": {
+        "title": "LLM-Verbindung neu konfigurieren",
+        "description": "Lassen Sie den API-Schlüssel leer, um den gespeicherten beizubehalten."
+      },
+      "reauth_confirm": {
+        "title": "Erneute Authentifizierung erforderlich",
+        "description": "Der gespeicherte API-Schlüssel ist nicht mehr gültig. Geben Sie einen neuen API-Schlüssel ein."
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zum Endpunkt fehlgeschlagen. Überprüfen Sie die URL und den Netzwerkzugriff.",
+      "invalid_auth": "Der API-Schlüssel ist ungültig oder hat keinen Zugriff auf den Endpunkt.",
+      "unknown": "Unerwarteter Fehler beim Überprüfen der Verbindung.",
+      "invalid_url": "Die Basis-URL ist keine gültige URL.",
+      "missing_base_url": "Im OpenAI-kompatiblen Modus ist eine Basis-URL erforderlich."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen von Buenos Días",
+        "description": "Wählen Sie, welchen Teil der Konfiguration Sie bearbeiten möchten. Die LLM-Verbindung wird über den Schritt „Neu konfigurieren“ in der Integrationsübersicht bearbeitet.",
+        "menu_options": {
+          "llm": "LLM",
+          "tts": "TTS und Player",
+          "sources": "Quellen",
+          "rss_feeds": "RSS-Feeds",
+          "schedule": "Zeitplan",
+          "persona": "Persona"
+        }
+      },
+      "llm": {
+        "title": "LLM-Optionen",
+        "description": "Maximale Ausgabelänge des generierten Skripts. Die Verbindungseinstellungen werden über „Neu konfigurieren“ bearbeitet.",
+        "data": {
+          "max_chars": "Maximale Skriptlänge (Zeichen)"
+        }
+      },
+      "tts": {
+        "title": "TTS und Medienplayer",
+        "data": {
+          "entity_id": "TTS-Entität",
+          "media_player": "Medienplayer",
+          "language": "Sprache",
+          "volume": "Lautstärke",
+          "restore_volume": "Vorherige Lautstärke wiederherstellen"
+        },
+        "data_description": {
+          "entity_id": "Die Entität der Sprachausgabe-Engine, z. B. tts.piper.",
+          "media_player": "Der Lautsprecher, auf dem das Morgenradio abgespielt wird.",
+          "volume": "Lautstärke während der Wiedergabe (0,0–1,0)."
+        }
+      },
+      "sources": {
+        "title": "Quellen",
+        "description": "Wetter, Kalender und Sensoren, die jeden Morgen gelesen werden. Die RSS-Feeds (Nachrichten und Ereignisse) werden separat bearbeitet.",
+        "data": {
+          "weather": "Wetter",
+          "calendar": "Kalender",
+          "sensors": "Sensoren"
+        },
+        "data_description": {
+          "weather": "Wetterentitäten, die in den Kontext aufgenommen werden.",
+          "calendar": "Kalenderentitäten, die in den Kontext aufgenommen werden.",
+          "sensors": "Sensor-Entitäten, die in den Kontext aufgenommen werden."
+        }
+      },
+      "rss_feeds": {
+        "title": "RSS-Feeds",
+        "description": "RSS-Feeds hinzufügen, bearbeiten oder entfernen (Stadtnachrichten und -ereignisse).",
+        "menu_options": {
+          "add_feed": "Feed hinzufügen"
+        }
+      },
+      "rss_feed": {
+        "title": "RSS-Feed",
+        "menu_options": {
+          "rss_edit": "Bearbeiten",
+          "rss_remove": "Entfernen"
+        }
+      },
+      "rss_add": {
+        "title": "RSS-Feed hinzufügen",
+        "data": {
+          "url": "Feed-URL",
+          "kind": "Art",
+          "max_age_hours": "Maximales Alter (Stunden)",
+          "max_items": "Maximale Anzahl",
+          "tags": "Tags",
+          "exclude": "Ausgeschlossene Schlüsselwörter"
+        },
+        "data_description": {
+          "kind": "Nachrichten-Feeds werden als Nachrichten gemeldet, Ereignis-Feeds als heutige Ereignisse.",
+          "tags": "Optionale Schlüsselwörter, die den Feed beschreiben.",
+          "exclude": "Durch Kommas oder Zeilen getrennte Schlüsselwörter. Einträge, deren Titel oder Zusammenfassung eines davon enthält, werden übersprungen, z. B. Fußball, Klatsch."
+        }
+      },
+      "rss_edit": {
+        "title": "RSS-Feed bearbeiten",
+        "data": {
+          "url": "Feed-URL",
+          "kind": "Art",
+          "max_age_hours": "Maximales Alter (Stunden)",
+          "max_items": "Maximale Anzahl",
+          "tags": "Tags",
+          "exclude": "Ausgeschlossene Schlüsselwörter"
+        },
+        "data_description": {
+          "exclude": "Durch Kommas oder Zeilen getrennte Schlüsselwörter. Einträge, deren Titel oder Zusammenfassung eines davon enthält, werden übersprungen, z. B. Fußball, Klatsch."
+        }
+      },
+      "rss_remove": {
+        "title": "RSS-Feed entfernen",
+        "description": "Feed „{name}“ entfernen.",
+        "data": {
+          "confirm_remove": "Diesen Feed entfernen"
+        }
+      },
+      "schedule": {
+        "title": "Zeitplan",
+        "data": {
+          "time": "Weckzeit",
+          "time_entity": "Zeit-Entität",
+          "skip_days": "Ausgelassene Wochentage",
+          "feriados": "Feiertage (einer pro Zeile)",
+          "skip_if_emitted": "Überspringen, falls bereits abgespielt"
+        },
+        "data_description": {
+          "time": "Feste Weckzeit (HH:MM). Wird ignoriert, wenn eine Zeit-Entität gesetzt ist.",
+          "time_entity": "Optionaler Sensor, der die Weckzeit dynamisch liefert, z. B. der Alarmsensor des Telefons.",
+          "feriados": "Daten, an denen der Alarm ausgelassen wird, ein ISO-Datum (JJJJ-MM-TT) pro Zeile."
+        }
+      },
+      "persona": {
+        "title": "Persona",
+        "description": "Die Persona bestimmt vollständig Sprache und Stil des gesprochenen Skripts."
+      }
+    },
+    "error": {
+      "invalid_feed_url": "Die Feed-URL ist nicht gültig.",
+      "invalid_date": "Bitte geben Sie ein ISO-Datum (JJJJ-MM-TT) pro Zeile ein.",
+      "invalid_feed_index": "Der ausgewählte Feed existiert nicht mehr."
+    }
+  },
+  "selector": {
+    "llm_mode": {
+      "options": {
+        "ha_conversation": "Home-Assistant-Konversationsagent",
+        "openai_compatible": "OpenAI-kompatibler Endpunkt"
+      }
+    },
+    "weekday": {
+      "options": {
+        "mon": "Montag",
+        "tue": "Dienstag",
+        "wed": "Mittwoch",
+        "thu": "Donnerstag",
+        "fri": "Freitag",
+        "sat": "Samstag",
+        "sun": "Sonntag"
+      }
+    },
+    "feed_kind": {
+      "options": {
+        "news": "Nachrichten",
+        "events": "Ereignisse"
+      }
+    }
+  }
+}

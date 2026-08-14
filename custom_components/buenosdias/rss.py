@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import unicodedata
 from datetime import UTC, datetime
 from typing import Any
 
@@ -12,6 +13,7 @@ import feedparser
 import httpx
 
 from .const import (
+    CONF_EXCLUDE,
     CONF_KIND,
     CONF_MAX_AGE_HOURS,
     CONF_MAX_ITEMS,
@@ -33,6 +35,20 @@ SUMMARY_MAX_LEN = 500
 def _normalize_title(title: str) -> str:
     """Normalize a title to deduplicate repeated entries."""
     return re.sub(r"[\s\W_]+", "", (title or "").lower())
+
+
+def _normalize_keyword(keyword: str) -> str:
+    """Lowercase and strip accents so 'futbol' matches 'fútbol'."""
+    decomposed = unicodedata.normalize("NFKD", (keyword or "").casefold())
+    return "".join(c for c in decomposed if not unicodedata.combining(c))
+
+
+def _matches_excludes(text: str, excludes: list[str]) -> bool:
+    """Return True when the normalized text contains any exclude keyword."""
+    if not excludes or not text:
+        return False
+    haystack = _normalize_keyword(text)
+    return any(_normalize_keyword(kw) in haystack for kw in excludes)
 
 
 def _entry_published(entry: Any) -> datetime | None:
@@ -81,6 +97,7 @@ def parse_feed_content(content: bytes, feed: dict) -> list[dict]:
     max_age_hours = feed.get(CONF_MAX_AGE_HOURS, DEFAULT_MAX_AGE_HOURS)
     max_items = feed.get(CONF_MAX_ITEMS, DEFAULT_MAX_ITEMS)
     tags = feed.get(CONF_TAGS, [])
+    excludes = feed.get(CONF_EXCLUDE, [])
     feed_title = parsed.feed.get("title") if parsed.feed else None
     now = datetime.now(UTC)
 
@@ -95,6 +112,11 @@ def parse_feed_content(content: bytes, feed: dict) -> list[dict]:
             age_hours = (now - published).total_seconds() / 3600.0
             if age_hours < 0 or age_hours > max_age_hours:
                 continue
+        summary = entry.get("summary") or entry.get("description") or ""
+        if _matches_excludes(entry.get("title", ""), excludes) or _matches_excludes(
+            summary, excludes
+        ):
+            continue
         seen.add(norm)
         brief = _entry_brief(entry, feed_title)
         brief["tags"] = tags

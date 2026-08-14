@@ -1,5 +1,14 @@
-# Example configuration for the "buenosdias" integration.
-# Copy this block into your configuration.yaml (or services.home-assistant.config on NixOS).
+# DEPRECATED (v0.2.0): configuration is now managed through the UI config
+# flow (Settings → Devices & Services → Add Integration → "Buenos Días").
+#
+# This YAML block is only a migration path: at startup it triggers a one-time
+# import that creates a config entry (which you can then edit in the UI).
+# Once an entry exists, this block is ignored — remove it to avoid the warning.
+# The openrouter/base_url migrated from here is passed to the UI as defaults.
+#
+# If you currently use YAML, keep it, restart HA and confirm the import dialog;
+# then delete this block.
+# If you are new: skip YAML entirely, add the integration through the UI.
 
 buenosdias:
   llm:
@@ -35,6 +44,9 @@ buenosdias:
           max_age_hours: 24
           max_items: 5
           tags: [city, current]
+          # Optional: skip entries whose title or summary mentions any of
+          # these keywords (accents are ignored: "futbol" catches "fútbol").
+          exclude: [fútbol, farándula]
         - url: https://www.example.org/events/rss.xml
           kind: events
           max_age_hours: 168
