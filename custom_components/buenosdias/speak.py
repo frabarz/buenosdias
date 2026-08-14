@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from homeassistant.components.media_player import MediaPlayerEntityFeature
+
 from .const import (
     CONF_ENTITY_ID,
     CONF_LANGUAGE,
@@ -64,7 +66,13 @@ async def async_speak(hass: HomeAssistant, config: dict, text: str) -> None:
     previous_volume = media_player_volume(hass, media_player)
 
     state = hass.states.get(media_player)
-    if state is None or state.state in ("off", "standby", "idle"):
+    supports_turn_on = False
+    if state is not None:
+        turn_on_flag = int(state.attributes.get("supported_features") or 0)
+        supports_turn_on = bool(turn_on_flag & MediaPlayerEntityFeature.TURN_ON)
+    if state is None or (
+        supports_turn_on and state.state in ("off", "standby", "idle")
+    ):
         await _call(hass, "media_player", "turn_on", {"entity_id": media_player})
 
     if previous_volume is None or previous_volume != volume:
