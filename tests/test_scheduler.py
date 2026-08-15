@@ -94,6 +94,11 @@ def test_parse_time_accepts_hhmm():
     assert parse_time("00:00") == (0, 0)
 
 
+def test_parse_time_accepts_hhmmss():
+    assert parse_time("08:00:00") == (8, 0)
+    assert parse_time("06:30:45") == (6, 30)
+
+
 def test_parse_time_accepts_iso_datetime():
     assert parse_time("2026-08-11T07:30:00") == (7, 30)
 

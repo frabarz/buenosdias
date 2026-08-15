@@ -29,7 +29,7 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_TIME = "07:00"
 MAX_LOOKAHEAD_DAYS = 60
 
-_TIME_RE = re.compile(r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
+_TIME_RE = re.compile(r"^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$")
 
 WEEKDAY_MAP = {
     "mon": 0,
@@ -43,13 +43,13 @@ WEEKDAY_MAP = {
 
 
 def parse_time(value: str | datetime) -> tuple[int, int]:
-    """Normalize 'HH:MM' or ISO datetime into (hour, minute)."""
+    """Normalize 'HH:MM', 'HH:MM:SS' or ISO datetime into (hour, minute)."""
     if isinstance(value, datetime):
         return value.hour, value.minute
 
     value = str(value).strip()
     if _TIME_RE.match(value):
-        hour, minute = (int(part) for part in value.split(":"))
+        hour, minute = (int(part) for part in value.split(":")[:2])
     else:
         parsed = dt_util.parse_datetime(value)
         if parsed is None:

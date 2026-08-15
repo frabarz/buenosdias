@@ -45,7 +45,7 @@ from .const import (
     MODE_OPENAI_COMPATIBLE,
 )
 
-TIME_RE = r"^([01][0-9]|2[0-3]):[0-5][0-9]$"
+TIME_RE = r"^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$"
 DATE_RE = r"^\d{4}-\d{2}-\d{2}$"
 WEEKDAY_VALUES = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
