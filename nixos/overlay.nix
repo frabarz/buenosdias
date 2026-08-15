@@ -18,7 +18,7 @@ in
     buenosdias = prev.buildHomeAssistantComponent rec {
       owner = "buenosdias";
       domain = "buenosdias";
-      version = "0.3.1";
+      version = "0.3.2";
       inherit src;
 
       dependencies = with home-assistant.python3Packages; [
