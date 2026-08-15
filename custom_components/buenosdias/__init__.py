@@ -121,10 +121,12 @@ async def _async_configure(
         if not data["enabled"]:
             return
         local_today = dt_util.as_local(now).date()
+        holidays = await scheduler.async_holiday_dates(hass, config)
         if not scheduler.should_fire(
             config,
             today=local_today,
             last_emitted_date=store.last_emission_date,
+            holiday_dates=holidays,
         ):
             return
         next_alarm = scheduler.next_fire_time(
@@ -132,6 +134,7 @@ async def _async_configure(
             now=now,
             last_emitted_date=store.last_emission_date,
             alarm=scheduler.read_alarm_time(hass, config),
+            holiday_dates=holidays,
         )
         try:
             await coordinator.async_run(hass, config)
@@ -153,7 +156,7 @@ async def _async_configure(
 
     data = hass.data[DOMAIN]
     data["unsub_scheduler"] = scheduler.async_setup_scheduler(
-        hass, config, async_on_alarm
+        hass, config, async_on_alarm,
     )
 
 
@@ -165,17 +168,17 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     if hass.config_entries.async_has_entries(DOMAIN):
         _LOGGER.warning(
             "buenosdias is already configured through the UI; "
-            "remove the YAML block from configuration.yaml"
+            "remove the YAML block from configuration.yaml",
         )
         return True
 
     _LOGGER.warning(
         "YAML configuration of buenosdias is deprecated; "
-        "migrating to the UI via Settings -> Devices & Services"
+        "migrating to the UI via Settings -> Devices & Services",
     )
     hass.async_create_task(
         hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": SOURCE_IMPORT}, data=conf
+            DOMAIN, context={"source": SOURCE_IMPORT}, data=conf,
         ),
         "config entry import buenosdias",
     )
@@ -188,7 +191,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await _async_configure(hass, config, entry=entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     hass.data[DOMAIN]["unsub_update_listener"] = entry.add_update_listener(
-        _async_update_listener
+        _async_update_listener,
     )
     return True
 

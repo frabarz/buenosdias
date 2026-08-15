@@ -23,8 +23,8 @@ servers:
 3. **Playback** — the text is sent to HA's built-in TTS (`tts.speak`) on a
    configured `media_player`.
 4. **Alarm** — daily auto-scheduling with skip rules (`skip_days`, `feriados`,
-   `skip_if_emitted`), persistent state ("already emitted") and entities
-   (enable switch + status sensors).
+   an optional holiday calendar and `skip_if_emitted`), persistent state
+   ("already emitted") and entities (enable switch + status sensors).
 
 ## Architecture
 

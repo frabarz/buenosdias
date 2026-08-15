@@ -114,7 +114,8 @@ def parse_feed_content(content: bytes, feed: dict) -> list[dict]:
                 continue
         summary = entry.get("summary") or entry.get("description") or ""
         if _matches_excludes(entry.get("title", ""), excludes) or _matches_excludes(
-            summary, excludes
+            summary,
+            excludes,
         ):
             continue
         seen.add(norm)

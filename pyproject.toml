@@ -29,4 +29,5 @@ pythonpath = ["."]
 asyncio_mode = "auto"
 
 [tool.ruff.lint]
-ignore = ["ARG001"]
+select = ["ALL"]
+ignore = ["ARG001", "ARG002", "ANN002", "ANN003", "FA100"]

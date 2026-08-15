@@ -155,12 +155,14 @@
           "time_entity": "Entidad de hora",
           "skip_days": "Días de la semana a omitir",
           "feriados": "Festivos (uno por línea)",
+          "holiday_calendar": "Calendario de festivos",
           "skip_if_emitted": "Omitir si ya se emitió"
         },
         "data_description": {
           "time": "Hora fija de la alarma (HH:MM). Los segundos, si los hay, se ignoran. Déjela vacía si hay una entidad de hora.",
           "time_entity": "Sensor opcional que proporciona la hora de la alarma de forma dinámica, p. ej. el sensor de alarma de su teléfono. Anula la hora fija.",
-          "feriados": "Fechas en las que se omite la alarma, una fecha ISO (AAAA-MM-DD) por línea."
+          "feriados": "Fechas en las que se omite la alarma, una fecha ISO (AAAA-MM-DD) por línea.",
+          "holiday_calendar": "Entidad de calendario opcional (p. ej. de la integración Holiday de Home Assistant) cuyos eventos de día completo cuentan como festivos y omiten la alarma. Déjela vacía para usar solo las fechas manuales de arriba."
         }
       },
       "persona": {

@@ -47,6 +47,7 @@ from .const import (
     CONF_EXCLUDE,
     CONF_FEEDS,
     CONF_FERIADOS,
+    CONF_HOLIDAY_CALENDAR,
     CONF_KIND,
     CONF_LANGUAGE,
     CONF_LLM,
@@ -102,37 +103,37 @@ STEP_USER_MODE_SCHEMA = vol.Schema(
                 options=_LLM_MODES,
                 mode=SelectSelectorMode.DROPDOWN,
                 translation_key="llm_mode",
-            )
+            ),
         ),
-    }
+    },
 )
 
 STEP_USER_AGENT_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_AGENT): EntitySelector(
-            EntitySelectorConfig(domain="conversation")
+            EntitySelectorConfig(domain="conversation"),
         ),
-    }
+    },
 )
 
 STEP_USER_OPENAI_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_BASE_URL): TextSelector(
-            TextSelectorConfig(type=TextSelectorType.URL)
+            TextSelectorConfig(type=TextSelectorType.URL),
         ),
         vol.Optional(CONF_MODEL): TextSelector(),
         vol.Optional(CONF_API_KEY): TextSelector(
-            TextSelectorConfig(type=TextSelectorType.PASSWORD)
+            TextSelectorConfig(type=TextSelectorType.PASSWORD),
         ),
-    }
+    },
 )
 
 STEP_REAUTH_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_API_KEY): TextSelector(
-            TextSelectorConfig(type=TextSelectorType.PASSWORD)
+            TextSelectorConfig(type=TextSelectorType.PASSWORD),
         ),
-    }
+    },
 )
 
 _DAYS: list[SelectOptionDict] = [
@@ -148,49 +149,47 @@ STEP_LLM_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_MAX_CHARS): NumberSelector(
             NumberSelectorConfig(
-                min=100, max=20000, step=100, mode=NumberSelectorMode.BOX
-            )
+                min=100, max=20000, step=100, mode=NumberSelectorMode.BOX,
+            ),
         ),
-    }
+    },
 )
 
 STEP_TTS_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_ENTITY_ID): EntitySelector(
-            EntitySelectorConfig(domain="tts")
+            EntitySelectorConfig(domain="tts"),
         ),
         vol.Required(CONF_MEDIA_PLAYER): EntitySelector(
-            EntitySelectorConfig(domain="media_player")
+            EntitySelectorConfig(domain="media_player"),
         ),
         vol.Optional(CONF_LANGUAGE, default="es-ES"): TextSelector(),
         vol.Optional(CONF_VOLUME, default=0.6): NumberSelector(
-            NumberSelectorConfig(
-                min=0, max=1, step=0.05, mode=NumberSelectorMode.BOX
-            )
+            NumberSelectorConfig(min=0, max=1, step=0.05, mode=NumberSelectorMode.BOX),
         ),
         vol.Optional(CONF_RESTORE_VOLUME, default=True): BooleanSelector(),
-    }
+    },
 )
 
 STEP_SOURCES_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_WEATHER, default=[]): EntitySelector(
-            EntitySelectorConfig(domain="weather", multiple=True)
+            EntitySelectorConfig(domain="weather", multiple=True),
         ),
         vol.Optional(CONF_CALENDAR, default=[]): EntitySelector(
-            EntitySelectorConfig(domain="calendar", multiple=True)
+            EntitySelectorConfig(domain="calendar", multiple=True),
         ),
         vol.Optional(CONF_SENSORS, default=[]): EntitySelector(
-            EntitySelectorConfig(domain="sensor", multiple=True)
+            EntitySelectorConfig(domain="sensor", multiple=True),
         ),
-    }
+    },
 )
 
 STEP_SCHEDULE_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_TIME): TimeSelector(),
         vol.Optional(CONF_TIME_ENTITY): EntitySelector(
-            EntitySelectorConfig(domain="sensor")
+            EntitySelectorConfig(domain="sensor"),
         ),
         vol.Optional(CONF_SKIP_DAYS, default=[]): SelectSelector(
             SelectSelectorConfig(
@@ -198,51 +197,54 @@ STEP_SCHEDULE_OPTIONS_SCHEMA = vol.Schema(
                 multiple=True,
                 mode=SelectSelectorMode.DROPDOWN,
                 translation_key="weekday",
-            )
+            ),
         ),
         vol.Optional(CONF_FERIADOS, default=""): TextSelector(
-            TextSelectorConfig(multiline=True)
+            TextSelectorConfig(multiline=True),
+        ),
+        vol.Optional(CONF_HOLIDAY_CALENDAR): EntitySelector(
+            EntitySelectorConfig(domain="calendar"),
         ),
         vol.Optional(CONF_SKIP_IF_EMITTED, default=True): BooleanSelector(),
-    }
+    },
 )
 
 STEP_PERSONA_OPTIONS_SCHEMA = vol.Schema(
-    {vol.Optional(CONF_PERSONA, default=""): TextSelector()}
+    {vol.Optional(CONF_PERSONA, default=""): TextSelector()},
 )
 
 STEP_RSS_FEED_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_URL): TextSelector(
-            TextSelectorConfig(type=TextSelectorType.URL)
+            TextSelectorConfig(type=TextSelectorType.URL),
         ),
         vol.Optional(CONF_KIND, default=KIND_NEWS): SelectSelector(
             SelectSelectorConfig(
                 options=_KINDS,
                 mode=SelectSelectorMode.DROPDOWN,
                 translation_key="feed_kind",
-            )
+            ),
         ),
         vol.Optional(CONF_MAX_AGE_HOURS, default=72): NumberSelector(
-            NumberSelectorConfig(min=1, max=8760, step=1, mode=NumberSelectorMode.BOX)
+            NumberSelectorConfig(min=1, max=8760, step=1, mode=NumberSelectorMode.BOX),
         ),
         vol.Optional(CONF_MAX_ITEMS, default=5): NumberSelector(
-            NumberSelectorConfig(min=1, max=50, step=1, mode=NumberSelectorMode.BOX)
+            NumberSelectorConfig(min=1, max=50, step=1, mode=NumberSelectorMode.BOX),
         ),
         vol.Optional(CONF_TAGS, default=""): TextSelector(),
         vol.Optional(CONF_EXCLUDE, default=""): TextSelector(
-            TextSelectorConfig(multiline=True)
+            TextSelectorConfig(multiline=True),
         ),
-    }
+    },
 )
 
 STEP_RSS_EDIT_SCHEMA = STEP_RSS_FEED_SCHEMA.extend(
-    {vol.Optional(CONF_CONFIRM_REMOVE, default=False): BooleanSelector()}
+    {vol.Optional(CONF_CONFIRM_REMOVE, default=False): BooleanSelector()},
 )
 
 
 async def _async_validate_connection(
-    hass: HomeAssistant, base_url: str, api_key: str | None
+    hass: HomeAssistant, base_url: str, api_key: str | None,
 ) -> str | None:
     """Probe an OpenAI-compatible endpoint and return an error key or None."""
     url = f"{base_url.rstrip('/')}/models"
@@ -252,7 +254,7 @@ async def _async_validate_connection(
     try:
         client = httpx_client.get_async_client(hass, verify_ssl=True)
         response = await client.get(
-            url, headers=headers, timeout=httpx.Timeout(CONNECTION_TIMEOUT)
+            url, headers=headers, timeout=httpx.Timeout(CONNECTION_TIMEOUT),
         )
         response.raise_for_status()
     except httpx.HTTPStatusError as err:
@@ -311,7 +313,7 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         return BuenosdiasOptionsFlowHandler(config_entry)
 
     async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Handle the initial step: choose the LLM connection mode."""
         if user_input is not None:
@@ -329,14 +331,12 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_user_agent(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Handle the conversation agent step."""
         if user_input is not None:
             agent = (user_input.get(CONF_AGENT) or "").strip()
-            return await self._finish_llm(
-                _build_llm(MODE_HA_CONVERSATION, agent=agent)
-            )
+            return await self._finish_llm(_build_llm(MODE_HA_CONVERSATION, agent=agent))
         return self.async_show_form(
             step_id="user_agent",
             data_schema=self.add_suggested_values_to_schema(
@@ -346,7 +346,7 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_user_openai(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Handle the OpenAI-compatible endpoint step."""
         errors: dict[str, str] = {}
@@ -370,7 +370,7 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
                             .get(CONF_API_KEY, "")
                         )
                     error = await _async_validate_connection(
-                        self.hass, base_url, api_key
+                        self.hass, base_url, api_key,
                     )
                     if error:
                         errors["base"] = error
@@ -382,7 +382,7 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
                         base_url=base_url,
                         model=model,
                         api_key=api_key,
-                    )
+                    ),
                 )
 
         openai = self._current_llm().get(CONF_OPENAI, {})
@@ -405,18 +405,18 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         if self.source == SOURCE_RECONFIGURE:
             self._abort_if_unique_id_mismatch()
             return self.async_update_reload_and_abort(
-                self._get_reconfigure_entry(), data_updates=entry_data
+                self._get_reconfigure_entry(), data_updates=entry_data,
             )
         if self.source == SOURCE_REAUTH:
             self._abort_if_unique_id_mismatch()
             return self.async_update_reload_and_abort(
-                self._get_reauth_entry(), data_updates=entry_data
+                self._get_reauth_entry(), data_updates=entry_data,
             )
         self._abort_if_unique_id_configured()
         return self.async_create_entry(title="Buenos Días", data=entry_data)
 
     async def async_step_import(
-        self, user_input: Mapping[str, Any] | None = None
+        self, user_input: Mapping[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Import a YAML configuration into a config entry."""
         if user_input is None:
@@ -445,7 +445,7 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_reconfigure(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Reconfigure the LLM connection of an existing entry."""
         await self.async_set_unique_id(DOMAIN)
@@ -453,13 +453,13 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         return await self.async_step_user(user_input)
 
     async def async_step_reauth(
-        self, entry_data: Mapping[str, Any]
+        self, entry_data: Mapping[str, Any],
     ) -> ConfigFlowResult:
         """Handle reauthentication when the stored API key is invalid."""
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Dialog that asks for a new API key."""
         errors: dict[str, str] = {}
@@ -483,10 +483,10 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
                             **entry.data.get(CONF_LLM, {}).get(CONF_OPENAI, {}),
                             CONF_API_KEY: api_key,
                         },
-                    }
+                    },
                 }
                 return self.async_update_reload_and_abort(
-                    entry, data_updates=data_updates
+                    entry, data_updates=data_updates,
                 )
 
         return self.async_show_form(
@@ -510,7 +510,11 @@ def _parse_tags(raw: Any) -> list[str]:
     """Split a free-text tags field into a list."""
     if not raw:
         return []
-    return [part.strip() for part in str(raw).replace(",", "\n").splitlines() if part.strip()]
+    return [
+        part.strip()
+        for part in str(raw).replace(",", "\n").splitlines()
+        if part.strip()
+    ]
 
 
 def _normalize_time(value: Any) -> str | None:
@@ -523,7 +527,9 @@ def _normalize_time(value: Any) -> str | None:
     return f"{parts[0]}:{parts[1]}"
 
 
-def _feed_from_user_input(user_input: Mapping[str, Any]) -> tuple[dict[str, Any] | None, dict[str, str] | None]:
+def _feed_from_user_input(
+    user_input: Mapping[str, Any],
+) -> tuple[dict[str, Any] | None, dict[str, str] | None]:
     """Build an RSS feed dict from validated user input, or its errors."""
     errors: dict[str, str] = {}
     url = (user_input.get(CONF_URL) or "").strip()
@@ -565,8 +571,10 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return dict(self.options)
 
     def _current_feeds(self) -> list[dict[str, Any]]:
-        return self.config_entry.options.get(CONF_SOURCES, {}).get(CONF_RSS, {}).get(
-            CONF_FEEDS, []
+        return (
+            self.config_entry.options.get(CONF_SOURCES, {})
+            .get(CONF_RSS, {})
+            .get(CONF_FEEDS, [])
         )
 
     def _replace_options(self, options: dict[str, Any]) -> ConfigFlowResult:
@@ -587,7 +595,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
             idx = i
 
             async def _step(
-                user_input: dict[str, Any] | None = None, _idx: int = idx
+                user_input: dict[str, Any] | None = None, _idx: int = idx,
             ) -> ConfigFlowResult:
                 return await self.async_step_rss_edit(user_input, _idx)
 
@@ -596,7 +604,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
     # ---------- main menu ----------
 
     async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Choose which part of the configuration to edit."""
         return self.async_show_menu(
@@ -626,7 +634,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="llm",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_LLM_OPTIONS_SCHEMA, suggested
+                STEP_LLM_OPTIONS_SCHEMA, suggested,
             ),
         )
 
@@ -648,7 +656,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="tts",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_TTS_OPTIONS_SCHEMA, self._current_options().get(CONF_TTS, {})
+                STEP_TTS_OPTIONS_SCHEMA, self._current_options().get(CONF_TTS, {}),
             ),
         )
 
@@ -670,7 +678,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="sources",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_SOURCES_OPTIONS_SCHEMA, current_sources
+                STEP_SOURCES_OPTIONS_SCHEMA, current_sources,
             ),
         )
 
@@ -702,7 +710,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         )
 
     async def async_step_rss_edit(
-        self, user_input: dict[str, Any] | None = None, index: int | None = None
+        self, user_input: dict[str, Any] | None = None, index: int | None = None,
     ):
         """Edit or remove an existing feed."""
         self._feed_index = index if index is not None else self._feed_index
@@ -727,7 +735,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
                 return self._replace_options(options)
         if errors:
             return self.async_show_form(
-                step_id="rss_edit", data_schema=STEP_RSS_EDIT_SCHEMA, errors=errors
+                step_id="rss_edit", data_schema=STEP_RSS_EDIT_SCHEMA, errors=errors,
             )
         feed = feeds[feed_index]
         suggested = {
@@ -741,7 +749,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="rss_edit",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_RSS_EDIT_SCHEMA, suggested
+                STEP_RSS_EDIT_SCHEMA, suggested,
             ),
         )
 
@@ -762,8 +770,9 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
                     CONF_TIME_ENTITY: user_input.get(CONF_TIME_ENTITY) or "",
                     CONF_SKIP_DAYS: user_input.get(CONF_SKIP_DAYS) or [],
                     CONF_FERIADOS: feriados,
+                    CONF_HOLIDAY_CALENDAR: user_input.get(CONF_HOLIDAY_CALENDAR) or "",
                     CONF_SKIP_IF_EMITTED: bool(
-                        user_input.get(CONF_SKIP_IF_EMITTED, True)
+                        user_input.get(CONF_SKIP_IF_EMITTED, True),
                     ),
                 }
                 return self._replace_options(options)
@@ -774,12 +783,13 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
             CONF_TIME_ENTITY: schedule.get(CONF_TIME_ENTITY),
             CONF_SKIP_DAYS: schedule.get(CONF_SKIP_DAYS, []),
             CONF_FERIADOS: "\n".join(schedule.get(CONF_FERIADOS, [])),
+            CONF_HOLIDAY_CALENDAR: schedule.get(CONF_HOLIDAY_CALENDAR),
             CONF_SKIP_IF_EMITTED: bool(schedule.get(CONF_SKIP_IF_EMITTED, True)),
         }
         return self.async_show_form(
             step_id="schedule",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_SCHEDULE_OPTIONS_SCHEMA, suggested
+                STEP_SCHEDULE_OPTIONS_SCHEMA, suggested,
             ),
             errors=errors,
         )
@@ -796,6 +806,6 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="persona",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_PERSONA_OPTIONS_SCHEMA, suggested
+                STEP_PERSONA_OPTIONS_SCHEMA, suggested,
             ),
         )

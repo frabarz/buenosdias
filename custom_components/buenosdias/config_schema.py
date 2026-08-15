@@ -13,6 +13,7 @@ from .const import (
     CONF_EXCLUDE,
     CONF_FEEDS,
     CONF_FERIADOS,
+    CONF_HOLIDAY_CALENDAR,
     CONF_KIND,
     CONF_LANGUAGE,
     CONF_LLM,
@@ -152,6 +153,10 @@ SCHEDULE_SCHEMA = vol.Schema(
             [vol.In(WEEKDAY_VALUES)],
         ),
         vol.Optional(CONF_FERIADOS, default=[]): vol.All([vol.Match(DATE_RE)]),
+        vol.Optional(CONF_HOLIDAY_CALENDAR, default=""): vol.All(
+            str,
+            vol.Length(min=0),
+        ),
         vol.Optional(CONF_SKIP_IF_EMITTED, default=True): bool,
     },
     extra=vol.ALLOW_EXTRA,

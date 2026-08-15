@@ -3,10 +3,18 @@
 import asyncio
 from datetime import date, datetime, timezone
 
-from custom_components.buenosdias import async_setup_entry
-from custom_components.buenosdias.const import CONF_SCHEDULE, CONF_TIME, CONF_TIME_ENTITY, DOMAIN
-from custom_components.buenosdias import scheduler
+from homeassistant.components.calendar.const import DATA_COMPONENT as CALENDAR_COMPONENT
+
+from custom_components.buenosdias import async_setup_entry, scheduler
+from custom_components.buenosdias.const import (
+    CONF_HOLIDAY_CALENDAR,
+    CONF_SCHEDULE,
+    CONF_TIME,
+    CONF_TIME_ENTITY,
+    DOMAIN,
+)
 from custom_components.buenosdias.scheduler import (
+    async_holiday_dates,
     next_fire_time,
     parse_time,
     read_alarm_time,
@@ -38,6 +46,18 @@ def test_should_fire_skips_holiday():
     config = {CONF_SCHEDULE: {CONF_FERIADOS: ["2026-08-10"]}}
     assert should_fire(config, today=date(2026, 8, 10)) is False
     assert should_fire(config, today=date(2026, 8, 11)) is True
+
+
+def test_should_fire_skips_calendar_holiday():
+    config = {CONF_SCHEDULE: {CONF_FERIADOS: []}}
+    assert (
+        should_fire(config, today=date(2026, 8, 10), holiday_dates={"2026-08-10"})
+        is False
+    )
+    assert (
+        should_fire(config, today=date(2026, 8, 11), holiday_dates={"2026-08-10"})
+        is True
+    )
 
 
 def test_should_fire_skip_if_emitted():
@@ -77,6 +97,13 @@ def test_next_fire_time_skips_holiday_tomorrow():
         CONF_SCHEDULE: {CONF_TIME: "07:00", CONF_FERIADOS: ["2026-08-11"]}
     }
     result = next_fire_time(config, now=now)
+    assert result == "2026-08-12T07:00:00+00:00"
+
+
+def test_next_fire_time_skips_calendar_holiday_tomorrow():
+    now = datetime(2026, 8, 10, 10, 0, tzinfo=timezone.utc)
+    config = {CONF_SCHEDULE: {CONF_TIME: "07:00"}}
+    result = next_fire_time(config, now=now, holiday_dates={"2026-08-11"})
     assert result == "2026-08-12T07:00:00+00:00"
 
 
@@ -305,3 +332,69 @@ def test_alarm_does_not_fire_when_disabled(fake_hass, fake_trackers, monkeypatch
     asyncio.run(callback(now))
 
     assert runs == []
+
+
+def test_async_holiday_dates_manual_only(fake_hass):
+    from types import SimpleNamespace
+
+    hass, _ = fake_hass()
+    config = {CONF_SCHEDULE: {CONF_FERIADOS: ["2026-08-10"]}}
+    dates = asyncio.run(async_holiday_dates(hass, config))
+    assert dates == {"2026-08-10"}
+
+
+def test_async_holiday_dates_merges_calendar_events(fake_hass):
+    from types import SimpleNamespace
+
+    from homeassistant.util import dt as dt_util
+
+    hass, _ = fake_hass()
+    utc_midnight = datetime(2026, 8, 15, 0, 0, tzinfo=timezone.utc)
+    events = [
+        SimpleNamespace(start=date(2026, 8, 11)),
+        SimpleNamespace(start=utc_midnight),
+    ]
+
+    async def fake_get_events(hass, start_date, end_date):
+        return events
+
+    component = SimpleNamespace(
+        get_entity=lambda eid: SimpleNamespace(
+            async_get_events=fake_get_events
+        )
+        if eid == "calendar.chile"
+        else None
+    )
+    hass.data[CALENDAR_COMPONENT] = component
+    config = {
+        CONF_SCHEDULE: {
+            CONF_HOLIDAY_CALENDAR: "calendar.chile",
+            CONF_FERIADOS: ["2026-08-01"],
+        }
+    }
+    dates = asyncio.run(async_holiday_dates(hass, config))
+    local_date = dt_util.as_local(utc_midnight).date().isoformat()
+    assert dates == {"2026-08-01", "2026-08-11", local_date}
+
+
+def test_async_holiday_dates_missing_calendar_falls_back(fake_hass):
+    from types import SimpleNamespace
+
+    hass, _ = fake_hass()
+    component = SimpleNamespace(get_entity=lambda eid: None)
+    hass.data[CALENDAR_COMPONENT] = component
+    config = {
+        CONF_SCHEDULE: {
+            CONF_HOLIDAY_CALENDAR: "calendar.missing",
+            CONF_FERIADOS: ["2026-08-10"],
+        }
+    }
+    dates = asyncio.run(async_holiday_dates(hass, config))
+    assert dates == {"2026-08-10"}
+
+
+def test_async_holiday_dates_unconfigured_ignores_component(fake_hass):
+    hass, _ = fake_hass()
+    config = {CONF_SCHEDULE: {}}
+    dates = asyncio.run(async_holiday_dates(hass, config))
+    assert dates == set()

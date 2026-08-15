@@ -7,11 +7,13 @@ import re
 from datetime import date, datetime, time, timedelta
 from typing import TYPE_CHECKING
 
+from homeassistant.components.calendar.const import DATA_COMPONENT as CALENDAR_COMPONENT
 from homeassistant.helpers import event as ha_event
 from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_FERIADOS,
+    CONF_HOLIDAY_CALENDAR,
     CONF_SCHEDULE,
     CONF_SKIP_DAYS,
     CONF_SKIP_IF_EMITTED,
@@ -84,26 +86,75 @@ def read_alarm_time(hass: HomeAssistant, config: dict) -> tuple[int, int] | None
     return parse_time(schedule.get(CONF_TIME, DEFAULT_TIME))
 
 
-def _day_allowed(day: date, schedule: dict) -> bool:
-    """Return whether the day is not skipped by skip_days or feriados."""
+def _day_allowed(
+    day: date, schedule: dict, holiday_dates: set[str] | None = None,
+) -> bool:
+    """Return whether the day is not skipped by skip_days or holidays."""
     skip_days = schedule.get(CONF_SKIP_DAYS, [])
     if day.weekday() in {WEEKDAY_MAP[name] for name in skip_days}:
         return False
 
-    feriados = schedule.get(CONF_FERIADOS, [])
+    feriados = set(schedule.get(CONF_FERIADOS, []))
+    if holiday_dates:
+        feriados.update(holiday_dates)
     return day.isoformat() not in feriados
+
+
+async def async_holiday_dates(
+    hass: HomeAssistant,
+    config: dict,
+    days: int = MAX_LOOKAHEAD_DAYS,
+) -> set[str]:
+    """Resolve the ISO dates (YYYY-MM-DD) on which the alarm is skipped.
+
+    Always includes the manually configured ``feriados``. When the schedule
+    points to a holiday calendar (e.g. from the Home Assistant Holiday
+    integration), the calendar is asked for every event within the next
+    ``days`` days and those dates are added.
+    """
+    schedule = config.get(CONF_SCHEDULE, {})
+    dates = set(schedule.get(CONF_FERIADOS, []))
+    calendar_entity = schedule.get(CONF_HOLIDAY_CALENDAR, "")
+    if not calendar_entity:
+        return dates
+
+    component = hass.data.get(CALENDAR_COMPONENT)
+    entity = component.get_entity(calendar_entity) if component else None
+    if entity is None or not hasattr(entity, "async_get_events"):
+        _LOGGER.warning(
+            "holiday_calendar %s not available; falling back to the manual holidays",
+            calendar_entity,
+        )
+        return dates
+
+    now = dt_util.now()
+    start = dt_util.start_of_local_day(now)
+    end = start + timedelta(days=days)
+    try:
+        events = await entity.async_get_events(hass, start, end)
+    except Exception:
+        _LOGGER.exception("could not read holidays from %s", calendar_entity)
+        return dates
+
+    for event in events:
+        event_start = event.start
+        if isinstance(event_start, datetime):
+            event_start = dt_util.as_local(event_start).date()
+        dates.add(event_start.isoformat())
+    return dates
 
 
 def should_fire(
     config: dict,
     today: date | None = None,
     last_emitted_date: str | None = None,
+    holiday_dates: set[str] | None = None,
 ) -> bool:
     """Decide whether the alarm should fire today based on the configuration."""
     schedule = config.get(CONF_SCHEDULE, {})
     today = today or dt_util.as_local(dt_util.utcnow()).date()
 
-    if not _day_allowed(today, schedule):
+    if not _day_allowed(today, schedule, holiday_dates):
         return False
 
     return not (
@@ -118,6 +169,7 @@ def next_fire_time(
     last_emitted_date: str | None = None,
     max_days: int = MAX_LOOKAHEAD_DAYS,
     alarm: tuple[int, int] | None = None,
+    holiday_dates: set[str] | None = None,
 ) -> str | None:
     """Compute the next alarm time (ISO-8601 UTC) or None."""
     schedule = config.get(CONF_SCHEDULE, {})
@@ -129,7 +181,7 @@ def next_fire_time(
 
     for offset in range(max_days):
         day = today + timedelta(days=offset)
-        if not _day_allowed(day, schedule):
+        if not _day_allowed(day, schedule, holiday_dates):
             continue
         if offset == 0 and skip_if_emitted and last_emitted_date == day.isoformat():
             continue

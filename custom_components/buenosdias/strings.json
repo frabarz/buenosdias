@@ -155,12 +155,14 @@
           "time_entity": "Time entity",
           "skip_days": "Skip weekdays",
           "feriados": "Holidays (one per line)",
+          "holiday_calendar": "Holiday calendar",
           "skip_if_emitted": "Skip if already emitted"
         },
         "data_description": {
           "time": "Fixed alarm time (HH:MM). Seconds, if any, are ignored. Leave empty when a time entity is set.",
           "time_entity": "Optional sensor that provides the alarm time dynamically, e.g. your phone's alarm sensor. Overrides the fixed time.",
-          "feriados": "Dates on which the alarm is skipped, one ISO date (YYYY-MM-DD) per line."
+          "feriados": "Dates on which the alarm is skipped, one ISO date (YYYY-MM-DD) per line.",
+          "holiday_calendar": "Optional calendar entity (e.g. from the Home Assistant Holiday integration) whose all-day events count as holidays and skip the alarm. Leave empty to only use the manual dates above."
         }
       },
       "persona": {

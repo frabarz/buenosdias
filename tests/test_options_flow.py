@@ -10,6 +10,7 @@ from custom_components.buenosdias.const import (
     CONF_ENTITY_ID,
     CONF_EXCLUDE,
     CONF_FERIADOS,
+    CONF_HOLIDAY_CALENDAR,
     CONF_LLM,
     CONF_MAX_AGE_HOURS,
     CONF_MAX_CHARS,
@@ -145,6 +146,19 @@ async def test_schedule_step_updates(hass):
     assert schedule[CONF_TIME] == "08:30"
     assert schedule["skip_days"] == ["sat", "sun"]
     assert schedule[CONF_FERIADOS] == ["2026-01-01", "2026-05-01"]
+
+
+async def test_schedule_step_accepts_holiday_calendar(hass):
+    entry = await _make_entry(hass)
+    result = await _start_options(hass, entry.entry_id)
+    result = await _navigate(hass, result["flow_id"], "schedule")
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_TIME: "08:30", CONF_HOLIDAY_CALENDAR: "calendar.chile"},
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    schedule = entry.options[CONF_SCHEDULE]
+    assert schedule[CONF_HOLIDAY_CALENDAR] == "calendar.chile"
 
 
 async def test_schedule_step_rejects_bad_dates(hass):

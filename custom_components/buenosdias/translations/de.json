@@ -155,12 +155,14 @@
           "time_entity": "Zeit-Entität",
           "skip_days": "Ausgelassene Wochentage",
           "feriados": "Feiertage (einer pro Zeile)",
+          "holiday_calendar": "Feiertagskalender",
           "skip_if_emitted": "Überspringen, falls bereits abgespielt"
         },
         "data_description": {
           "time": "Feste Weckzeit (HH:MM). Sekunden werden ignoriert. Leer lassen, wenn eine Zeit-Entität gesetzt ist.",
           "time_entity": "Optionaler Sensor, der die Weckzeit dynamisch liefert, z. B. der Alarmsensor des Telefons. Überschreibt die feste Zeit.",
-          "feriados": "Daten, an denen der Alarm ausgelassen wird, ein ISO-Datum (JJJJ-MM-TT) pro Zeile."
+          "feriados": "Daten, an denen der Alarm ausgelassen wird, ein ISO-Datum (JJJJ-MM-TT) pro Zeile.",
+          "holiday_calendar": "Optionale Kalender-Entität (z. B. aus der Holiday-Integration von Home Assistant), deren ganztägige Einträge als Feiertage zählen und den Alarm auslassen. Leer lassen, um nur die manuellen Daten oben zu verwenden."
         }
       },
       "persona": {

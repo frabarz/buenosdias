@@ -65,7 +65,7 @@ LLM connection (`ha_conversation` agent or an OpenAI-compatible endpoint). The
 - **TTS** — TTS engine, media player, language, volume, restore volume.
 - **Sources** — weather, calendar and sensor entities, plus RSS feeds.
 - **Schedule** — alarm time (or a `time_entity`), skip days, `feriados`,
-  `skip_if_emitted`.
+  an optional holiday calendar and `skip_if_emitted`.
 - **Persona** — free-text prompt controlling the script's language and style.
 
 API keys are stored in the config entry `data` (never in options, never

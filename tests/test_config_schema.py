@@ -5,6 +5,7 @@ import voluptuous as vol
 
 from custom_components.buenosdias.config_schema import CONFIG_SCHEMA
 from custom_components.buenosdias.const import (
+    CONF_HOLIDAY_CALENDAR,
     CONF_LLM,
     CONF_MODE,
     CONF_RSS,
@@ -60,6 +61,22 @@ def test_schema_accepts_time_entity():
 def test_schema_default_time_entity():
     validated = CONFIG_SCHEMA({DOMAIN: {}})
     assert validated[DOMAIN][CONF_SCHEDULE][CONF_TIME_ENTITY] == ""
+
+
+def test_schema_accepts_holiday_calendar():
+    config = {
+        DOMAIN: {"schedule": {CONF_HOLIDAY_CALENDAR: "calendar.chile"}}
+    }
+    validated = CONFIG_SCHEMA(config)
+    assert (
+        validated[DOMAIN][CONF_SCHEDULE][CONF_HOLIDAY_CALENDAR]
+        == "calendar.chile"
+    )
+
+
+def test_schema_default_holiday_calendar():
+    validated = CONFIG_SCHEMA({DOMAIN: {}})
+    assert validated[DOMAIN][CONF_SCHEDULE][CONF_HOLIDAY_CALENDAR] == ""
 
 
 def test_schema_allows_section_absence():

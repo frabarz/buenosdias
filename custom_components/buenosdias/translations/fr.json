@@ -155,12 +155,14 @@
           "time_entity": "Entité horaire",
           "skip_days": "Jours de la semaine ignorés",
           "feriados": "Jours fériés (un par ligne)",
+          "holiday_calendar": "Calendrier des jours fériés",
           "skip_if_emitted": "Ignorer si déjà émis"
         },
         "data_description": {
           "time": "Heure d'alarme fixe (HH:MM). Les secondes, le cas échéant, sont ignorées. Laissez vide si une entité horaire est définie.",
           "time_entity": "Capteur facultatif fournissant l'heure de l'alarme dynamiquement, ex. le capteur d'alarme du téléphone. Remplace l'heure fixe.",
-          "feriados": "Dates auxquelles l'alarme est ignorée, une date ISO (AAAA-MM-JJ) par ligne."
+          "feriados": "Dates auxquelles l'alarme est ignorée, une date ISO (AAAA-MM-JJ) par ligne.",
+          "holiday_calendar": "Entité de calendrier facultative (ex. de l'intégration Holiday de Home Assistant) dont les événements sur la journée comptent comme jours fériés et ignorent l'alarme. Laissez vide pour n'utiliser que les dates manuelles ci-dessus."
         }
       },
       "persona": {
