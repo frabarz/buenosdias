@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from email.utils import format_datetime
 
 import httpx
@@ -264,3 +264,37 @@ def test_async_fetch_feeds_tolerates_invalid_xml():
 def test_async_fetch_feeds_without_feeds():
     sections = _run(rss.async_fetch_feeds(None, []))
     assert sections == {KIND_NEWS: [], KIND_EVENTS: []}
+
+
+def test_async_fetch_feeds_uses_shared_ha_client(monkeypatch):
+    now = datetime.now(UTC)
+    xml = _rss_xml(
+        [
+            {
+                "title": "Shared client story",
+                "slug": "shared",
+                "pubdate": _pubdate(now - timedelta(hours=1)),
+            }
+        ]
+    )
+
+    def handler(request):
+        return httpx.Response(200, content=xml)
+
+    shared = _mock_client(handler)
+    calls = []
+    monkeypatch.setattr(
+        rss.httpx_client,
+        "get_async_client",
+        lambda hass: (calls.append(hass) or shared),
+    )
+
+    class _Hass:
+        pass
+
+    hass = _Hass()
+    sections = _run(rss.async_fetch_feeds(hass, [_feed("https://example.org/s.xml")]))
+    _close(shared)
+
+    assert calls == [hass]
+    assert sections[KIND_NEWS][0]["title"] == "Shared client story"

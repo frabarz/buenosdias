@@ -11,6 +11,7 @@ from typing import Any
 
 import feedparser
 import httpx
+from homeassistant.helpers import httpx_client
 
 from .const import (
     CONF_EXCLUDE,
@@ -28,7 +29,6 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_MAX_AGE_HOURS = 72
 DEFAULT_MAX_ITEMS = 5
 DEFAULT_TIMEOUT = 10.0
-USER_AGENT = "buenosdias/0.1"
 SUMMARY_MAX_LEN = 500
 
 
@@ -128,7 +128,11 @@ def parse_feed_content(content: bytes, feed: dict) -> list[dict]:
 
 async def _fetch_one(client: httpx.AsyncClient, feed: dict) -> list[dict]:
     """Download and parse a single feed."""
-    response = await client.get(feed[CONF_URL])
+    response = await client.get(
+        feed[CONF_URL],
+        follow_redirects=True,
+        timeout=httpx.Timeout(DEFAULT_TIMEOUT),
+    )
     response.raise_for_status()
     return await asyncio.to_thread(parse_feed_content, response.content, feed)
 
@@ -141,26 +145,18 @@ async def async_fetch_feeds(
     """Collect the news and events sections from the configured feeds.
 
     A down or invalid feed does not abort the rest: a warning is logged and
-    its section stays empty.
+    its section stays empty. The shared Home Assistant httpx client is used so
+    the SSL context is built once outside the event loop, never per request.
     """
     sections: dict[str, list[dict]] = {KIND_NEWS: [], KIND_EVENTS: []}
     if not feeds:
         return sections
 
-    own_client = client is None
-    session = client or httpx.AsyncClient(
-        timeout=httpx.Timeout(DEFAULT_TIMEOUT),
-        headers={"User-Agent": USER_AGENT},
-        follow_redirects=True,
+    session = client or httpx_client.get_async_client(hass)
+    results = await asyncio.gather(
+        *[_fetch_one(session, feed) for feed in feeds],
+        return_exceptions=True,
     )
-    try:
-        results = await asyncio.gather(
-            *[_fetch_one(session, feed) for feed in feeds],
-            return_exceptions=True,
-        )
-    finally:
-        if own_client:
-            await session.aclose()
 
     for feed, result in zip(feeds, results):
         if isinstance(result, BaseException):

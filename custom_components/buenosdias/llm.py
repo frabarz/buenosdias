@@ -8,6 +8,7 @@ from typing import Any
 
 import httpx
 from homeassistant.core import Context
+from homeassistant.helpers import httpx_client
 
 from .const import (
     CONF_AGENT,
@@ -85,7 +86,9 @@ class OpenAICompatLLM(LLMClient):
         api_key: str,
         model: str,
         transport: httpx.AsyncBaseTransport | None = None,
+        hass: Any | None = None,
     ) -> None:
+        self._hass = hass
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
         self._model = model
@@ -104,13 +107,25 @@ class OpenAICompatLLM(LLMClient):
         }
         url = f"{self._base_url}{CHAT_COMPLETIONS_PATH}"
         try:
-            async with httpx.AsyncClient(
-                timeout=httpx.Timeout(DEFAULT_TIMEOUT),
-                transport=self._transport,
-            ) as client:
-                response = await client.post(url, headers=headers, json=payload)
-                response.raise_for_status()
-                data = response.json()
+            if self._transport is not None:
+                async with httpx.AsyncClient(
+                    timeout=httpx.Timeout(DEFAULT_TIMEOUT),
+                    transport=self._transport,
+                ) as client:
+                    response = await client.post(url, headers=headers, json=payload)
+            else:
+                if self._hass is None:
+                    msg = "OpenAI client requires hass for the shared HTTP client"
+                    raise LLMError(msg)
+                client = httpx_client.get_async_client(self._hass)
+                response = await client.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    timeout=httpx.Timeout(DEFAULT_TIMEOUT),
+                )
+            response.raise_for_status()
+            data = response.json()
         except Exception as err:
             msg = f"OpenAI endpoint failed: {err}"
             raise LLMError(msg) from err
@@ -146,6 +161,7 @@ def build_llm(hass: Any, config: dict) -> LLMClient:
         base_url=openai_cfg.get(CONF_BASE_URL, ""),
         api_key=openai_cfg.get(CONF_API_KEY, ""),
         model=openai_cfg.get(CONF_MODEL, ""),
+        hass=hass,
     )
     if llm_cfg.get(CONF_MODE, MODE_HA_CONVERSATION) == MODE_HA_CONVERSATION:
         return FallbackLLM(ha_llm, openai_llm)

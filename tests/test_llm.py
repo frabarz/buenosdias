@@ -174,7 +174,7 @@ def test_fallback_llm_primary_ok_skips_fallback():
 
 
 def test_build_llm_ha_primary(monkeypatch):
-    fake_openai = lambda base_url, api_key, model, transport=None: _OkLLM()  # noqa: E731
+    fake_openai = lambda base_url, api_key, model, transport=None, hass=None: _OkLLM()  # noqa: E731
     fake_ha = lambda hass, agent="": _FailingLLM()  # noqa: E731
     monkeypatch.setattr("custom_components.buenosdias.llm.OpenAICompatLLM", fake_openai)
     monkeypatch.setattr("custom_components.buenosdias.llm.HAConversationLLM", fake_ha)
@@ -187,7 +187,7 @@ def test_build_llm_ha_primary(monkeypatch):
 
 
 def test_build_llm_openai_primary(monkeypatch):
-    fake_openai = lambda base_url, api_key, model, transport=None: _OkLLM()  # noqa: E731
+    fake_openai = lambda base_url, api_key, model, transport=None, hass=None: _OkLLM()  # noqa: E731
     fake_ha = lambda hass, agent="": _FailingLLM()  # noqa: E731
     monkeypatch.setattr("custom_components.buenosdias.llm.OpenAICompatLLM", fake_openai)
     monkeypatch.setattr("custom_components.buenosdias.llm.HAConversationLLM", fake_ha)
