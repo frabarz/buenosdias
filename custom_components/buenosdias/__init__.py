@@ -187,7 +187,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     config = build_config(entry.data, entry.options)
     await _async_configure(hass, config, entry=entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.add_update_listener(_async_update_listener)
+    hass.data[DOMAIN]["unsub_update_listener"] = entry.add_update_listener(
+        _async_update_listener
+    )
     return True
 
 
@@ -199,6 +201,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         unsub = data.get("unsub_scheduler")
         if unsub is not None:
             unsub()
+        unsub_listener = data.get("unsub_update_listener")
+        if unsub_listener is not None:
+            unsub_listener()
         for service in (SERVICE_CONTEXT, SERVICE_GENERATE, SERVICE_EMIT):
             hass.services.async_remove(DOMAIN, service)
         hass.data.pop(DOMAIN, None)
