@@ -1,7 +1,7 @@
 """Constants of the buenosdias integration."""
 
 DOMAIN = "buenosdias"
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 
 CONF_LLM = "llm"
 CONF_TTS = "tts"
