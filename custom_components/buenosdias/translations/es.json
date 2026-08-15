@@ -3,19 +3,36 @@
     "step": {
       "user": {
         "title": "Buenos Días",
-        "description": "Configura el LLM que escribe el guion de la radio matutina.",
+        "description": "Configura el LLM que escribe el guion de la radio matutina. Elija primero el modo de conexión; los campos correspondientes aparecen en el siguiente paso.",
         "data": {
-          "mode": "Modo de LLM",
-          "agent": "Agente de conversación",
+          "mode": "Modo de LLM"
+        },
+        "data_description": {
+          "mode": "El agente de conversación de Home Assistant o un punto final compatible con OpenAI."
+        }
+      },
+      "user_agent": {
+        "title": "Agente de conversación",
+        "description": "Elija el agente de conversación de Home Assistant que escribe el guion.",
+        "data": {
+          "agent": "Agente de conversación"
+        },
+        "data_description": {
+          "agent": "La entidad del agente de conversación que se usará, p. ej. conversation.assist."
+        }
+      },
+      "user_openai": {
+        "title": "Punto final compatible con OpenAI",
+        "description": "Configure un punto final compatible con OpenAI. La conexión se comprueba antes de guardar.",
+        "data": {
           "base_url": "URL base",
           "model": "Modelo",
           "api_key": "Clave de API"
         },
         "data_description": {
-          "agent": "La entidad del agente de conversación que se usará en el modo principal, p. ej. conversation.assist.",
           "base_url": "Punto final compatible con OpenAI, p. ej. http://localhost:11434/v1 o https://openrouter.ai/api/v1.",
-          "model": "Nombre del modelo usado por el punto final (solo en modo compatible con OpenAI).",
-          "api_key": "Opcional. Obligatoria para proveedores en la nube como OpenRouter o Groq."
+          "model": "Nombre del modelo usado por el punto final, p. ej. openrouter/free.",
+          "api_key": "Opcional. Obligatoria para proveedores en la nube como OpenRouter o Groq. Déjela vacía al reconfigurar para conservar la almacenada."
         }
       },
       "reconfigure": {
@@ -93,16 +110,9 @@
       },
       "rss_feeds": {
         "title": "Fuentes RSS",
-        "description": "Añada, edite o elimine fuentes RSS (noticias y eventos de la ciudad).",
+        "description": "Haga clic en un feed para editarlo, o elimínelo desde el editor.",
         "menu_options": {
-          "add_feed": "Añadir fuente"
-        }
-      },
-      "rss_feed": {
-        "title": "Fuente RSS",
-        "menu_options": {
-          "rss_edit": "Editar",
-          "rss_remove": "Eliminar"
+          "rss_add": "Añadir fuente"
         }
       },
       "rss_add": {
@@ -118,32 +128,28 @@
         "data_description": {
           "kind": "las fuentes de noticias se informan como noticias; las de eventos, como eventos de hoy.",
           "tags": "Palabras clave opcionales que describen la fuente.",
-          "exclude": "Palabras clave separadas por comas o líneas. Se omiten las entradas cuyo título o resumen contenga alguna de ellas, p. ej. fútbol, farándula."
+          "exclude": "Lista de palabras clave separadas por comas o líneas (no es una expresión regular). Se omiten las entradas cuyo título o descripción contenga alguna palabra clave como subcadena, sin distinguir mayúsculas ni acentos, p. ej. fútbol, farándula."
         }
       },
       "rss_edit": {
         "title": "Editar fuente RSS",
         "data": {
-          "url": "URL de la fuente",
+          "url": "URL del feed",
           "kind": "Tipo",
-          "max_age_hours": "Edad máxima (horas)",
-          "max_items": "Máximo de elementos",
+          "max_age_hours": "Antigüedad máxima (horas)",
+          "max_items": "Máx. de noticias",
           "tags": "Etiquetas",
-          "exclude": "Palabras clave a excluir"
+          "exclude": "Palabras clave excluidas",
+          "confirm_remove": "Eliminar este feed"
         },
         "data_description": {
-          "exclude": "Palabras clave separadas por comas o líneas. Se omiten las entradas cuyo título o resumen contenga alguna de ellas, p. ej. fútbol, farándula."
-        }
-      },
-      "rss_remove": {
-        "title": "Eliminar fuente RSS",
-        "description": "Elimine la fuente '{name}'.",
-        "data": {
-          "confirm_remove": "Eliminar esta fuente"
+          "exclude": "Lista de palabras clave separadas por comas o líneas (no es una expresión regular). Se omiten las entradas cuyo título o descripción contenga alguna palabra clave como subcadena, sin distinguir mayúsculas ni acentos, p. ej. fútbol, farándula.",
+          "confirm_remove": "Marque esto y guarde para eliminar el feed de forma permanente."
         }
       },
       "schedule": {
         "title": "Programación",
+        "description": "La alarma usa una hora fija o una entidad de hora, no ambas. Si hay una entidad de hora, tiene prioridad.",
         "data": {
           "time": "Hora de la alarma",
           "time_entity": "Entidad de hora",
@@ -152,8 +158,8 @@
           "skip_if_emitted": "Omitir si ya se emitió"
         },
         "data_description": {
-          "time": "Hora fija de la alarma (HH:MM). Se ignora si hay una entidad de hora configurada.",
-          "time_entity": "Sensor opcional que proporciona la hora de la alarma de forma dinámica, p. ej. el sensor de alarma de su teléfono.",
+          "time": "Hora fija de la alarma (HH:MM). Los segundos, si los hay, se ignoran. Déjela vacía si hay una entidad de hora.",
+          "time_entity": "Sensor opcional que proporciona la hora de la alarma de forma dinámica, p. ej. el sensor de alarma de su teléfono. Anula la hora fija.",
           "feriados": "Fechas en las que se omite la alarma, una fecha ISO (AAAA-MM-DD) por línea."
         }
       },

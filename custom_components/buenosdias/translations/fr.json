@@ -3,19 +3,36 @@
     "step": {
       "user": {
         "title": "Buenos Días",
-        "description": "Configurez le LLM qui rédige le script de la radio du matin.",
+        "description": "Configurez le LLM qui rédige le script de la radio du matin. Choisissez d'abord le mode de connexion ; les champs correspondants apparaissent à l'étape suivante.",
         "data": {
-          "mode": "Mode LLM",
-          "agent": "Agent de conversation",
+          "mode": "Mode LLM"
+        },
+        "data_description": {
+          "mode": "L'agent de conversation Home Assistant ou un point de terminaison compatible OpenAI."
+        }
+      },
+      "user_agent": {
+        "title": "Agent de conversation",
+        "description": "Choisissez l'agent de conversation Home Assistant qui rédige le script.",
+        "data": {
+          "agent": "Agent de conversation"
+        },
+        "data_description": {
+          "agent": "L'entité d'agent de conversation à utiliser, ex. conversation.assist."
+        }
+      },
+      "user_openai": {
+        "title": "Point de terminaison compatible OpenAI",
+        "description": "Configurez un point de terminaison compatible OpenAI. La connexion est testée avant l'enregistrement.",
+        "data": {
           "base_url": "URL de base",
           "model": "Modèle",
           "api_key": "Clé API"
         },
         "data_description": {
-          "agent": "L'entité d'agent de conversation à utiliser pour le mode principal, ex. conversation.assist.",
           "base_url": "Point de terminaison compatible OpenAI, ex. http://localhost:11434/v1 ou https://openrouter.ai/api/v1.",
-          "model": "Nom du modèle utilisé par le point de terminaison (uniquement en mode compatible OpenAI).",
-          "api_key": "Facultatif. Requis pour les fournisseurs cloud tels que OpenRouter ou Groq."
+          "model": "Nom du modèle utilisé par le point de terminaison, ex. openrouter/free.",
+          "api_key": "Facultatif. Requis pour les fournisseurs cloud tels que OpenRouter ou Groq. Laissez vide lors de la reconfiguration pour conserver la clé stockée."
         }
       },
       "reconfigure": {
@@ -93,16 +110,9 @@
       },
       "rss_feeds": {
         "title": "Flux RSS",
-        "description": "Ajoutez, modifiez ou supprimez des flux RSS (actualités et événements de la ville).",
+        "description": "Cliquez sur un flux pour le modifier, ou supprimez-le depuis l'éditeur.",
         "menu_options": {
-          "add_feed": "Ajouter un flux"
-        }
-      },
-      "rss_feed": {
-        "title": "Flux RSS",
-        "menu_options": {
-          "rss_edit": "Modifier",
-          "rss_remove": "Supprimer"
+          "rss_add": "Ajouter un flux"
         }
       },
       "rss_add": {
@@ -118,7 +128,7 @@
         "data_description": {
           "kind": "les flux d'actualités sont rapportés comme actualités ; les flux d'événements comme événements du jour.",
           "tags": "Mots-clés facultatifs décrivant le flux.",
-          "exclude": "Mots-clés séparés par des virgules ou des lignes. Les entrées dont le titre ou le résumé en contient un sont ignorées, ex. football, potins."
+          "exclude": "Mots-clés séparés par des virgules ou des lignes (pas une regex). Les entrées dont le titre ou la description contient un mot-clé en tant que sous-chaîne sont ignorées, sans tenir compte des majuscules ni des accents, ex. football, potins."
         }
       },
       "rss_edit": {
@@ -126,24 +136,20 @@
         "data": {
           "url": "URL du flux",
           "kind": "Type",
-          "max_age_hours": "Âge maximal (heures)",
-          "max_items": "Nombre maximal d'éléments",
-          "tags": "Mots-clés",
-          "exclude": "Mots-clés exclus"
+          "max_age_hours": "Âge max (heures)",
+          "max_items": "Articles max",
+          "tags": "Étiquettes",
+          "exclude": "Mots-clés exclus",
+          "confirm_remove": "Supprimer ce flux"
         },
         "data_description": {
-          "exclude": "Mots-clés séparés par des virgules ou des lignes. Les entrées dont le titre ou le résumé en contient un sont ignorées, ex. football, potins."
-        }
-      },
-      "rss_remove": {
-        "title": "Supprimer le flux RSS",
-        "description": "Supprimer le flux « {name} ».",
-        "data": {
-          "confirm_remove": "Supprimer ce flux"
+          "exclude": "Mots-clés séparés par des virgules ou des lignes (pas une regex). Les entrées dont le titre ou la description contient un mot-clé en tant que sous-chaîne sont ignorées, sans tenir compte des majuscules ni des accents, ex. football, potins.",
+          "confirm_remove": "Cochez puis enregistrez pour supprimer définitivement le flux."
         }
       },
       "schedule": {
         "title": "Programmation",
+        "description": "L'alarme utilise soit une heure fixe, soit une entité horaire, pas les deux. Si une entité horaire est définie, elle a priorité.",
         "data": {
           "time": "Heure de l'alarme",
           "time_entity": "Entité horaire",
@@ -152,8 +158,8 @@
           "skip_if_emitted": "Ignorer si déjà émis"
         },
         "data_description": {
-          "time": "Heure d'alarme fixe (HH:MM). Ignorée si une entité horaire est définie.",
-          "time_entity": "Capteur facultatif fournissant l'heure de l'alarme dynamiquement, ex. le capteur d'alarme du téléphone.",
+          "time": "Heure d'alarme fixe (HH:MM). Les secondes, le cas échéant, sont ignorées. Laissez vide si une entité horaire est définie.",
+          "time_entity": "Capteur facultatif fournissant l'heure de l'alarme dynamiquement, ex. le capteur d'alarme du téléphone. Remplace l'heure fixe.",
           "feriados": "Dates auxquelles l'alarme est ignorée, une date ISO (AAAA-MM-JJ) par ligne."
         }
       },

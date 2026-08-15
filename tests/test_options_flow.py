@@ -6,6 +6,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.buenosdias.const import (
     CONF_CALENDAR,
+    CONF_CONFIRM_REMOVE,
     CONF_ENTITY_ID,
     CONF_EXCLUDE,
     CONF_FERIADOS,
@@ -158,6 +159,18 @@ async def test_schedule_step_rejects_bad_dates(hass):
     assert result["errors"][CONF_FERIADOS] == "invalid_date"
 
 
+async def test_schedule_step_accepts_hhmmss_time(hass):
+    entry = await _make_entry(hass)
+    result = await _start_options(hass, entry.entry_id)
+    result = await _navigate(hass, result["flow_id"], "schedule")
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_TIME: "08:00:00"},
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert entry.options[CONF_SCHEDULE][CONF_TIME] == "08:00"
+
+
 async def test_persona_step_updates(hass):
     entry = await _make_entry(hass)
     result = await _start_options(hass, entry.entry_id)
@@ -241,8 +254,6 @@ async def test_rss_edit_updates_feed(hass):
     result = await _start_options(hass, entry.entry_id)
     result = await _navigate(hass, result["flow_id"], "rss_feeds")
     result = await _navigate(hass, result["flow_id"], "feed_0")
-    assert result["type"] == FlowResultType.MENU
-    result = await _navigate(hass, result["flow_id"], "rss_edit")
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "rss_edit"
 
@@ -262,7 +273,6 @@ async def test_rss_edit_prefills_exclude(hass):
     result = await _start_options(hass, entry.entry_id)
     result = await _navigate(hass, result["flow_id"], "rss_feeds")
     result = await _navigate(hass, result["flow_id"], "feed_0")
-    result = await _navigate(hass, result["flow_id"], "rss_edit")
     assert result["type"] == FlowResultType.FORM
     marker = next(k for k in result["data_schema"].schema if k == CONF_EXCLUDE)
     assert marker.description["suggested_value"] == "futbol, farandula"
@@ -276,32 +286,29 @@ async def test_rss_edit_prefills_exclude(hass):
     assert feeds[0][CONF_EXCLUDE] == ["futbol"]
 
 
-async def test_rss_remove_removes_feed(hass):
+async def test_rss_edit_removes_feed(hass):
     entry = await _make_entry(hass)
     entry = await _add_feed_via_flow(hass, entry)
 
     result = await _start_options(hass, entry.entry_id)
     result = await _navigate(hass, result["flow_id"], "rss_feeds")
     result = await _navigate(hass, result["flow_id"], "feed_0")
-    result = await _navigate(hass, result["flow_id"], "rss_remove")
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"confirm_remove": True}
+        result["flow_id"], {CONF_URL: "https://feeds.example/blogs", CONF_CONFIRM_REMOVE: True}
     )
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert entry.options[CONF_SOURCES][CONF_RSS]["feeds"] == []
 
 
-async def test_rss_remove_unconfirmed_keeps_feed(hass):
+async def test_rss_edit_unchecked_keeps_feed(hass):
     entry = await _make_entry(hass)
     entry = await _add_feed_via_flow(hass, entry)
 
     result = await _start_options(hass, entry.entry_id)
     result = await _navigate(hass, result["flow_id"], "rss_feeds")
     result = await _navigate(hass, result["flow_id"], "feed_0")
-    result = await _navigate(hass, result["flow_id"], "rss_remove")
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"confirm_remove": False}
+        result["flow_id"], {CONF_URL: "https://feeds.example/blogs", CONF_CONFIRM_REMOVE: False}
     )
-    assert result["type"] == FlowResultType.MENU
-    assert result["step_id"] == "rss_feeds"
+    assert result["type"] == FlowResultType.CREATE_ENTRY
     assert len(entry.options[CONF_SOURCES][CONF_RSS]["feeds"]) == 1

@@ -17,7 +17,9 @@ from homeassistant.config_entries import (
     OptionsFlowWithConfigEntry,
 )
 from homeassistant.const import CONF_API_KEY
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import httpx_client
 from homeassistant.helpers.selector import (
     BooleanSelector,
     EntitySelector,
@@ -93,7 +95,7 @@ _LLM_MODES: list[SelectOptionDict] = [
     ),
 ]
 
-STEP_USER_DATA_SCHEMA = vol.Schema(
+STEP_USER_MODE_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_MODE, default=MODE_HA_CONVERSATION): SelectSelector(
             SelectSelectorConfig(
@@ -102,9 +104,19 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
                 translation_key="llm_mode",
             )
         ),
+    }
+)
+
+STEP_USER_AGENT_SCHEMA = vol.Schema(
+    {
         vol.Optional(CONF_AGENT): EntitySelector(
             EntitySelectorConfig(domain="conversation")
         ),
+    }
+)
+
+STEP_USER_OPENAI_SCHEMA = vol.Schema(
+    {
         vol.Optional(CONF_BASE_URL): TextSelector(
             TextSelectorConfig(type=TextSelectorType.URL)
         ),
@@ -188,7 +200,9 @@ STEP_SCHEDULE_OPTIONS_SCHEMA = vol.Schema(
                 translation_key="weekday",
             )
         ),
-        vol.Optional(CONF_FERIADOS, default=""): TextSelector(),
+        vol.Optional(CONF_FERIADOS, default=""): TextSelector(
+            TextSelectorConfig(multiline=True)
+        ),
         vol.Optional(CONF_SKIP_IF_EMITTED, default=True): BooleanSelector(),
     }
 )
@@ -216,17 +230,19 @@ STEP_RSS_FEED_SCHEMA = vol.Schema(
             NumberSelectorConfig(min=1, max=50, step=1, mode=NumberSelectorMode.BOX)
         ),
         vol.Optional(CONF_TAGS, default=""): TextSelector(),
-        vol.Optional(CONF_EXCLUDE, default=""): TextSelector(),
+        vol.Optional(CONF_EXCLUDE, default=""): TextSelector(
+            TextSelectorConfig(multiline=True)
+        ),
     }
 )
 
-STEP_RSS_REMOVE_SCHEMA = vol.Schema(
-    {vol.Required(CONF_CONFIRM_REMOVE): BooleanSelector()}
+STEP_RSS_EDIT_SCHEMA = STEP_RSS_FEED_SCHEMA.extend(
+    {vol.Optional(CONF_CONFIRM_REMOVE, default=False): BooleanSelector()}
 )
 
 
 async def _async_validate_connection(
-    base_url: str, api_key: str | None
+    hass: HomeAssistant, base_url: str, api_key: str | None
 ) -> str | None:
     """Probe an OpenAI-compatible endpoint and return an error key or None."""
     url = f"{base_url.rstrip('/')}/models"
@@ -234,11 +250,11 @@ async def _async_validate_connection(
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     try:
-        async with httpx.AsyncClient(
-            timeout=httpx.Timeout(CONNECTION_TIMEOUT), headers=headers
-        ) as client:
-            response = await client.get(url)
-            response.raise_for_status()
+        client = httpx_client.get_async_client(hass, verify_ssl=True)
+        response = await client.get(
+            url, headers=headers, timeout=httpx.Timeout(CONNECTION_TIMEOUT)
+        )
+        response.raise_for_status()
     except httpx.HTTPStatusError as err:
         if err.response.status_code in (401, 403):
             return "invalid_auth"
@@ -256,14 +272,15 @@ async def _async_validate_connection(
     return None
 
 
-def _llm_from_user_input(user_input: Mapping[str, Any]) -> dict[str, Any]:
+def _build_llm(
+    mode: str,
+    *,
+    agent: str | None = None,
+    base_url: str | None = None,
+    model: str | None = None,
+    api_key: str | None = None,
+) -> dict[str, Any]:
     """Build the llm connection section from validated user input."""
-    mode = user_input[CONF_MODE]
-    agent = (user_input.get(CONF_AGENT) or "").strip()
-    base_url = (user_input.get(CONF_BASE_URL) or "").strip()
-    model = (user_input.get(CONF_MODEL) or "").strip()
-    api_key = (user_input.get(CONF_API_KEY) or "").strip()
-
     llm: dict[str, Any] = {CONF_MODE: mode}
     if mode == MODE_HA_CONVERSATION:
         if agent:
@@ -271,11 +288,11 @@ def _llm_from_user_input(user_input: Mapping[str, Any]) -> dict[str, Any]:
         return llm
 
     openai: dict[str, Any] = {
-        CONF_BASE_URL: base_url,
-        CONF_MODEL: model or DEFAULT_MODEL,
+        CONF_BASE_URL: (base_url or "").strip(),
+        CONF_MODEL: (model or DEFAULT_MODEL).strip(),
     }
     if api_key:
-        openai[CONF_API_KEY] = api_key
+        openai[CONF_API_KEY] = api_key.strip()
     llm[CONF_OPENAI] = openai
     return llm
 
@@ -296,50 +313,107 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the initial step."""
-        errors: dict[str, str] = {}
-
+        """Handle the initial step: choose the LLM connection mode."""
         if user_input is not None:
-            mode = user_input.get(CONF_MODE)
-            base_url = (user_input.get(CONF_BASE_URL) or "").strip()
-            api_key = (user_input.get(CONF_API_KEY) or "").strip()
-
-            if mode == MODE_OPENAI_COMPATIBLE:
-                if not base_url:
-                    errors[CONF_BASE_URL] = "missing_base_url"
-                else:
-                    try:
-                        cv.url(base_url)
-                    except vol.Invalid:
-                        errors[CONF_BASE_URL] = "invalid_url"
-                    if not errors:
-                        error = await _async_validate_connection(base_url, api_key)
-                        if error:
-                            errors["base"] = error
-
-            if not errors:
-                await self.async_set_unique_id(DOMAIN)
-                entry_data = {CONF_LLM: _llm_from_user_input(user_input)}
-                if self.source == SOURCE_RECONFIGURE:
-                    self._abort_if_unique_id_mismatch()
-                    return self.async_update_reload_and_abort(
-                        self._get_reconfigure_entry(), data_updates=entry_data
-                    )
-                if self.source == SOURCE_REAUTH:
-                    self._abort_if_unique_id_mismatch()
-                    return self.async_update_reload_and_abort(
-                        self._get_reauth_entry(), data_updates=entry_data
-                    )
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(title="Buenos Días", data=entry_data)
+            mode = user_input[CONF_MODE]
+            if mode == MODE_HA_CONVERSATION:
+                return await self.async_step_user_agent()
+            return await self.async_step_user_openai()
 
         return self.async_show_form(
             step_id="user",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_USER_DATA_SCHEMA, self._suggested_user_values()
+                STEP_USER_MODE_SCHEMA,
+                {CONF_MODE: self._current_llm().get(CONF_MODE)},
+            ),
+        )
+
+    async def async_step_user_agent(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle the conversation agent step."""
+        if user_input is not None:
+            agent = (user_input.get(CONF_AGENT) or "").strip()
+            return await self._finish_llm(
+                _build_llm(MODE_HA_CONVERSATION, agent=agent)
+            )
+        return self.async_show_form(
+            step_id="user_agent",
+            data_schema=self.add_suggested_values_to_schema(
+                STEP_USER_AGENT_SCHEMA,
+                {CONF_AGENT: self._current_llm().get(CONF_AGENT)},
+            ),
+        )
+
+    async def async_step_user_openai(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle the OpenAI-compatible endpoint step."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            base_url = (user_input.get(CONF_BASE_URL) or "").strip()
+            model = (user_input.get(CONF_MODEL) or "").strip()
+            api_key = (user_input.get(CONF_API_KEY) or "").strip()
+
+            if not base_url:
+                errors[CONF_BASE_URL] = "missing_base_url"
+            else:
+                try:
+                    cv.url(base_url)
+                except vol.Invalid:
+                    errors[CONF_BASE_URL] = "invalid_url"
+                if not errors:
+                    if not api_key and self.source == SOURCE_RECONFIGURE:
+                        api_key = (
+                            self._current_llm()
+                            .get(CONF_OPENAI, {})
+                            .get(CONF_API_KEY, "")
+                        )
+                    error = await _async_validate_connection(
+                        self.hass, base_url, api_key
+                    )
+                    if error:
+                        errors["base"] = error
+
+            if not errors:
+                return await self._finish_llm(
+                    _build_llm(
+                        MODE_OPENAI_COMPATIBLE,
+                        base_url=base_url,
+                        model=model,
+                        api_key=api_key,
+                    )
+                )
+
+        openai = self._current_llm().get(CONF_OPENAI, {})
+        return self.async_show_form(
+            step_id="user_openai",
+            data_schema=self.add_suggested_values_to_schema(
+                STEP_USER_OPENAI_SCHEMA,
+                {
+                    CONF_BASE_URL: openai.get(CONF_BASE_URL),
+                    CONF_MODEL: openai.get(CONF_MODEL),
+                },
             ),
             errors=errors,
         )
+
+    async def _finish_llm(self, llm: dict[str, Any]) -> ConfigFlowResult:
+        """Create or update the entry with the validated llm connection."""
+        await self.async_set_unique_id(DOMAIN)
+        entry_data = {CONF_LLM: llm}
+        if self.source == SOURCE_RECONFIGURE:
+            self._abort_if_unique_id_mismatch()
+            return self.async_update_reload_and_abort(
+                self._get_reconfigure_entry(), data_updates=entry_data
+            )
+        if self.source == SOURCE_REAUTH:
+            self._abort_if_unique_id_mismatch()
+            return self.async_update_reload_and_abort(
+                self._get_reauth_entry(), data_updates=entry_data
+            )
+        self._abort_if_unique_id_configured()
+        return self.async_create_entry(title="Buenos Días", data=entry_data)
 
     async def async_step_import(
         self, user_input: Mapping[str, Any] | None = None
@@ -396,7 +470,7 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
             base_url = (
                 entry.data.get(CONF_LLM, {}).get(CONF_OPENAI, {}).get(CONF_BASE_URL, "")
             )
-            error = await _async_validate_connection(base_url, api_key)
+            error = await _async_validate_connection(self.hass, base_url, api_key)
             if error:
                 errors["base"] = error
             else:
@@ -421,22 +495,15 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    def _suggested_user_values(self) -> Mapping[str, Any]:
-        """Return the current connection values to prefill the form."""
+    def _current_llm(self) -> Mapping[str, Any]:
+        """Return the stored llm connection of the entry being reconfigured."""
         if self.source == SOURCE_RECONFIGURE:
             entry = self._get_reconfigure_entry()
         elif self.source == SOURCE_REAUTH:
             entry = self._get_reauth_entry()
         else:
             return {}
-        llm = entry.data.get(CONF_LLM, {})
-        openai = llm.get(CONF_OPENAI, {})
-        return {
-            CONF_MODE: llm.get(CONF_MODE),
-            CONF_AGENT: llm.get(CONF_AGENT),
-            CONF_BASE_URL: openai.get(CONF_BASE_URL),
-            CONF_MODEL: openai.get(CONF_MODEL),
-        }
+        return entry.data.get(CONF_LLM, {})
 
 
 def _parse_tags(raw: Any) -> list[str]:
@@ -444,6 +511,16 @@ def _parse_tags(raw: Any) -> list[str]:
     if not raw:
         return []
     return [part.strip() for part in str(raw).replace(",", "\n").splitlines() if part.strip()]
+
+
+def _normalize_time(value: Any) -> str | None:
+    """Normalize a time value to 'HH:MM', dropping any seconds."""
+    if not value:
+        return None
+    parts = str(value).strip().split(":")
+    if len(parts) < 2:
+        return None
+    return f"{parts[0]}:{parts[1]}"
 
 
 def _feed_from_user_input(user_input: Mapping[str, Any]) -> tuple[dict[str, Any] | None, dict[str, str] | None]:
@@ -512,7 +589,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
             async def _step(
                 user_input: dict[str, Any] | None = None, _idx: int = idx
             ) -> ConfigFlowResult:
-                return await self.async_step_rss_feed(user_input, _idx)
+                return await self.async_step_rss_edit(user_input, _idx)
 
             setattr(self, f"async_step_feed_{idx}", _step)
 
@@ -607,16 +684,6 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
             menu[f"feed_{i}"] = feed.get(CONF_URL) or f"Feed {i + 1}"
         return self.async_show_menu(step_id="rss_feeds", menu_options=menu)
 
-    async def async_step_rss_feed(
-        self, user_input: dict[str, Any] | None = None, index: int | None = None
-    ):
-        """Choose whether to edit or remove one feed."""
-        self._feed_index = index if index is not None else self._feed_index
-        return self.async_show_menu(
-            step_id="rss_feed",
-            menu_options={"rss_edit": "Edit", "rss_remove": "Remove"},
-        )
-
     async def async_step_rss_add(self, user_input=None):
         """Add a new feed (news or events)."""
         errors: dict[str, str] = {}
@@ -634,26 +701,35 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
             errors=errors,
         )
 
-    async def async_step_rss_edit(self, user_input=None):
-        """Edit an existing feed."""
+    async def async_step_rss_edit(
+        self, user_input: dict[str, Any] | None = None, index: int | None = None
+    ):
+        """Edit or remove an existing feed."""
+        self._feed_index = index if index is not None else self._feed_index
         errors: dict[str, str] = {}
         feeds = self._current_feeds()
-        index = self._feed_index or 0
-        if not 0 <= index < len(feeds):
+        feed_index = self._feed_index or 0
+        if not 0 <= feed_index < len(feeds):
             errors["base"] = "invalid_feed_index"
         if user_input is not None and not errors:
+            if user_input.get(CONF_CONFIRM_REMOVE):
+                new_feeds = list(feeds)
+                new_feeds.pop(feed_index)
+                options = self._current_options()
+                self._set_feeds(options, new_feeds)
+                return self._replace_options(options)
             feed, errors = _feed_from_user_input(user_input)
             if feed is not None:
                 new_feeds = list(feeds)
-                new_feeds[index] = feed
+                new_feeds[feed_index] = feed
                 options = self._current_options()
                 self._set_feeds(options, new_feeds)
                 return self._replace_options(options)
         if errors:
             return self.async_show_form(
-                step_id="rss_edit", data_schema=STEP_RSS_FEED_SCHEMA, errors=errors
+                step_id="rss_edit", data_schema=STEP_RSS_EDIT_SCHEMA, errors=errors
             )
-        feed = feeds[index]
+        feed = feeds[feed_index]
         suggested = {
             CONF_URL: feed.get(CONF_URL, ""),
             CONF_KIND: feed.get(CONF_KIND, KIND_NEWS),
@@ -665,24 +741,8 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="rss_edit",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_RSS_FEED_SCHEMA, suggested
+                STEP_RSS_EDIT_SCHEMA, suggested
             ),
-        )
-
-    async def async_step_rss_remove(self, user_input=None):
-        """Confirm the removal of one feed."""
-        feeds = self._current_feeds()
-        index = self._feed_index or 0
-        if user_input is not None:
-            if user_input.get(CONF_CONFIRM_REMOVE) and 0 <= index < len(feeds):
-                new_feeds = list(feeds)
-                new_feeds.pop(index)
-                options = self._current_options()
-                self._set_feeds(options, new_feeds)
-                return self._replace_options(options)
-            return await self.async_step_rss_feeds()
-        return self.async_show_form(
-            step_id="rss_remove", data_schema=STEP_RSS_REMOVE_SCHEMA
         )
 
     # ---------- schedule ----------
@@ -698,7 +758,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
             else:
                 options = self._current_options()
                 options[CONF_SCHEDULE] = {
-                    CONF_TIME: user_input.get(CONF_TIME),
+                    CONF_TIME: _normalize_time(user_input.get(CONF_TIME)),
                     CONF_TIME_ENTITY: user_input.get(CONF_TIME_ENTITY) or "",
                     CONF_SKIP_DAYS: user_input.get(CONF_SKIP_DAYS) or [],
                     CONF_FERIADOS: feriados,
@@ -710,7 +770,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
 
         schedule = self._current_options().get(CONF_SCHEDULE, {})
         suggested = {
-            CONF_TIME: schedule.get(CONF_TIME),
+            CONF_TIME: _normalize_time(schedule.get(CONF_TIME)),
             CONF_TIME_ENTITY: schedule.get(CONF_TIME_ENTITY),
             CONF_SKIP_DAYS: schedule.get(CONF_SKIP_DAYS, []),
             CONF_FERIADOS: "\n".join(schedule.get(CONF_FERIADOS, [])),

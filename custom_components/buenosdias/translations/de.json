@@ -3,19 +3,36 @@
     "step": {
       "user": {
         "title": "Buenos Días",
-        "description": "Konfigurieren Sie das LLM, das das Morgenradio-Skript schreibt.",
+        "description": "Konfigurieren Sie das LLM, das das Morgenradio-Skript schreibt. Wählen Sie zuerst den Verbindungsmodus; die zugehörigen Felder erscheinen im nächsten Schritt.",
         "data": {
-          "mode": "LLM-Modus",
-          "agent": "Konversationsagent",
+          "mode": "LLM-Modus"
+        },
+        "data_description": {
+          "mode": "Der Home-Assistant-Konversationsagent oder ein OpenAI-kompatibler Endpunkt."
+        }
+      },
+      "user_agent": {
+        "title": "Konversationsagent",
+        "description": "Wählen Sie den Home-Assistant-Konversationsagenten, der das Skript schreibt.",
+        "data": {
+          "agent": "Konversationsagent"
+        },
+        "data_description": {
+          "agent": "Die Konversationsagent-Entität, die verwendet wird, z. B. conversation.assist."
+        }
+      },
+      "user_openai": {
+        "title": "OpenAI-kompatibler Endpunkt",
+        "description": "Konfigurieren Sie einen OpenAI-kompatiblen Endpunkt. Die Verbindung wird vor dem Speichern geprüft.",
+        "data": {
           "base_url": "Basis-URL",
           "model": "Modell",
           "api_key": "API-Schlüssel"
         },
         "data_description": {
-          "agent": "Die Konversationsagent-Entität für den primären Modus, z. B. conversation.assist.",
           "base_url": "OpenAI-kompatibler Endpunkt, z. B. http://localhost:11434/v1 oder https://openrouter.ai/api/v1.",
-          "model": "Modellname des Endpunkts (nur im OpenAI-kompatiblen Modus).",
-          "api_key": "Optional. Erforderlich für Cloud-Anbieter wie OpenRouter oder Groq."
+          "model": "Modellname des Endpunkts, z. B. openrouter/free.",
+          "api_key": "Optional. Erforderlich für Cloud-Anbieter wie OpenRouter oder Groq. Beim Neukonfigurieren leer lassen, um den gespeicherten Schlüssel zu behalten."
         }
       },
       "reconfigure": {
@@ -93,16 +110,9 @@
       },
       "rss_feeds": {
         "title": "RSS-Feeds",
-        "description": "RSS-Feeds hinzufügen, bearbeiten oder entfernen (Stadtnachrichten und -ereignisse).",
+        "description": "Klicken Sie auf einen Feed, um ihn zu bearbeiten, oder entfernen Sie ihn im Editor.",
         "menu_options": {
-          "add_feed": "Feed hinzufügen"
-        }
-      },
-      "rss_feed": {
-        "title": "RSS-Feed",
-        "menu_options": {
-          "rss_edit": "Bearbeiten",
-          "rss_remove": "Entfernen"
+          "rss_add": "Feed hinzufügen"
         }
       },
       "rss_add": {
@@ -118,7 +128,7 @@
         "data_description": {
           "kind": "Nachrichten-Feeds werden als Nachrichten gemeldet, Ereignis-Feeds als heutige Ereignisse.",
           "tags": "Optionale Schlüsselwörter, die den Feed beschreiben.",
-          "exclude": "Durch Kommas oder Zeilen getrennte Schlüsselwörter. Einträge, deren Titel oder Zusammenfassung eines davon enthält, werden übersprungen, z. B. Fußball, Klatsch."
+          "exclude": "Durch Kommas oder Zeilen getrennte Schlüsselwörter (keine Regex). Einträge, deren Titel oder Beschreibung ein Schlüsselwort als Teilzeichenfolge enthält, werden übersprungen, ohne Groß-/Kleinschreibung und Akzente zu berücksichtigen, z. B. Fußball, Klatsch."
         }
       },
       "rss_edit": {
@@ -126,24 +136,20 @@
         "data": {
           "url": "Feed-URL",
           "kind": "Art",
-          "max_age_hours": "Maximales Alter (Stunden)",
-          "max_items": "Maximale Anzahl",
-          "tags": "Tags",
-          "exclude": "Ausgeschlossene Schlüsselwörter"
+          "max_age_hours": "Max. Alter (Stunden)",
+          "max_items": "Max. Artikel",
+          "tags": "Schlagwörter",
+          "exclude": "Ausgeschlossene Schlüsselwörter",
+          "confirm_remove": "Diesen Feed entfernen"
         },
         "data_description": {
-          "exclude": "Durch Kommas oder Zeilen getrennte Schlüsselwörter. Einträge, deren Titel oder Zusammenfassung eines davon enthält, werden übersprungen, z. B. Fußball, Klatsch."
-        }
-      },
-      "rss_remove": {
-        "title": "RSS-Feed entfernen",
-        "description": "Feed „{name}“ entfernen.",
-        "data": {
-          "confirm_remove": "Diesen Feed entfernen"
+          "exclude": "Durch Kommas oder Zeilen getrennte Schlüsselwörter (keine Regex). Einträge, deren Titel oder Beschreibung ein Schlüsselwort als Teilzeichenfolge enthält, werden übersprungen, ohne Groß-/Kleinschreibung und Akzente zu berücksichtigen, z. B. Fußball, Klatsch.",
+          "confirm_remove": "Aktivieren und speichern, um den Feed dauerhaft zu entfernen."
         }
       },
       "schedule": {
         "title": "Zeitplan",
+        "description": "Der Alarm verwendet entweder eine feste Zeit oder eine Zeit-Entität, nicht beides. Wenn eine Zeit-Entität gesetzt ist, hat sie Vorrang.",
         "data": {
           "time": "Weckzeit",
           "time_entity": "Zeit-Entität",
@@ -152,8 +158,8 @@
           "skip_if_emitted": "Überspringen, falls bereits abgespielt"
         },
         "data_description": {
-          "time": "Feste Weckzeit (HH:MM). Wird ignoriert, wenn eine Zeit-Entität gesetzt ist.",
-          "time_entity": "Optionaler Sensor, der die Weckzeit dynamisch liefert, z. B. der Alarmsensor des Telefons.",
+          "time": "Feste Weckzeit (HH:MM). Sekunden werden ignoriert. Leer lassen, wenn eine Zeit-Entität gesetzt ist.",
+          "time_entity": "Optionaler Sensor, der die Weckzeit dynamisch liefert, z. B. der Alarmsensor des Telefons. Überschreibt die feste Zeit.",
           "feriados": "Daten, an denen der Alarm ausgelassen wird, ein ISO-Datum (JJJJ-MM-TT) pro Zeile."
         }
       },
