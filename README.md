@@ -28,27 +28,6 @@ servers:
 
 ## Architecture
 
-Pipeline and modules:
-
-```mermaid
-flowchart TD
-    subgraph Pipeline["coordinator.async_run: daily pipeline"]
-        SRC["sources.py<br/>(context)"]
-        SCR["script.py<br/>(LLM + validation)"]
-        SPK["speak.py<br/>(media_player)"]
-        SRC --> SCR --> SPK
-    end
-
-    HA["HA entity states"] --> SRC
-    RSS["RSS feeds"] --> SRC
-    SPK --> TTS["TTS engine"]
-
-    SCHED["scheduler.py<br/>(async_track_utc_time_change)"] -->|triggers| Pipeline
-    SCHED -->|reads "already emitted"| ST["state.py<br/>(storage.Store)"]
-    Pipeline -->|marks emitted| ST
-    ST --> ENT["switch.py / sensor.py<br/>(entities)"]
-```
-
 | Module | Responsibility |
 | --- | --- |
 | `config_flow.py` | Multi-step UI setup: LLM connection (probed via `GET /models`), plus options menu (TTS, sources, RSS feeds, schedule, persona). Reauth/reconfigure flows. |
