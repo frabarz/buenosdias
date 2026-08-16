@@ -7,19 +7,18 @@ spoken alarm, with no external services.
 
 1. Copy `custom_components/buenosdias/` to your `custom_components/` (or use
    the NixOS flake below) and restart HA.
-2. **Settings → Devices & Services → Add Integration → "Buenos Días"**, fill in
-   the LLM connection, then open Options to tune TTS, sources, schedule and
-   persona.
+2. **Settings → Devices & Services → Add Integration → "Buenos Días"**, fill
+   in the LLM connection, then use the Options menu to tune the rest.
 3. From Developer Tools → Services try:
 
    - `buenosdias.generate` — generates the script (dry-run).
    - `buenosdias.emit` — gathers context, generates and plays it over the
      speaker.
 
-> **Migrating from YAML?** v0.2.0 dropped YAML configuration. A legacy
-> `buenosdias:` block in `configuration.yaml` now only triggers a one-time
-> import into a config entry at startup. Keep it, restart HA, confirm the
-> import dialog, then remove the block and finish the setup in the UI.
+> **Migrating from YAML?** YAML configuration is deprecated. A legacy
+> `buenosdias:` block in `configuration.yaml` only triggers a one-time import
+> into a config entry at startup. Keep it, restart HA, confirm the import
+> dialog, then remove the block and finish the setup in the UI.
 
 ## Requirements
 
@@ -57,19 +56,28 @@ cp -r buenosdias/custom_components/buenosdias <hass_config>/custom_components/
 
 ## Configuration
 
-Setup is done through the **UI config flow**. The initial form asks for the
-LLM connection (`ha_conversation` agent or an OpenAI-compatible endpoint). The
-**Options** menu then covers, section by section:
+Setup is done through the **UI config flow**, in two parts:
 
-- **LLM** — max chars per script, and the connection itself.
+1. **LLM connection** (config flow): choose a Home Assistant conversation
+   agent, or an OpenAI-compatible endpoint (base URL, model, API key). The
+   endpoint is validated with a live probe before it is saved. The API key is
+   stored in the entry `data` and is never logged or exposed again.
+2. **Options menu** (Config Flow → Options), section by section:
+
+- **LLM** — maximum script length (`max_chars`, 100–20000).
 - **TTS** — TTS engine, media player, language, volume, restore volume.
-- **Sources** — weather, calendar and sensor entities, plus RSS feeds.
-- **Schedule** — alarm time (or a `time_entity`), skip days, `feriados`,
-  an optional holiday calendar and `skip_if_emitted`.
+- **Sources** — weather, calendar and sensor entities.
+- **RSS feeds** — add/edit/remove feeds inline; per feed set kind
+  (news/events), `max_age_hours`, `max_items`, `tags` and `exclude`
+  keywords.
+- **Schedule** — alarm time (or a `time_entity` to read it dynamically,
+  HH:MM or HH:MM:SS accepted), skip days, `feriados`, an optional holiday
+  calendar and `skip_if_emitted`.
 - **Persona** — free-text prompt controlling the script's language and style.
 
-API keys are stored in the config entry `data` (never in options, never
-logged). The full equivalent of the old YAML block is shown in
+To change the LLM connection later, use the integration's **Reconfigure
+entry** menu; if the stored API key is rejected, a reauthentication dialog is
+started automatically. The full equivalent of the old YAML block is shown in
 [config.example.yaml](config.example.yaml) purely as an import/migration
 reference.
 

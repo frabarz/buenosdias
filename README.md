@@ -51,15 +51,17 @@ flowchart TD
 
 | Module | Responsibility |
 | --- | --- |
+| `config_flow.py` | Multi-step UI setup: LLM connection (probed via `GET /models`), plus options menu (TTS, sources, RSS feeds, schedule, persona). Reauth/reconfigure flows. |
+| `config_utils.py` | `build_config`: merges entry `data` (credentials win) with `options` into the runtime config validated by `config_schema.py`. |
 | `sources.py` | Context from `hass.states` + RSS feed merging. |
-| `rss.py` | Feed fetch/parsing/filtering/dedup (`feedparser` + `httpx`). |
+| `rss.py` | Feed fetch/parsing/filtering/dedup (`feedparser` + shared `httpx` client). |
 | `llm.py` | `HAConversationLLM`, `OpenAICompatLLM`, `FallbackLLM`, `build_llm`. |
 | `prompts.py` | "Morning radio" persona template. |
 | `script.py` | Script generation and validation (non-empty, ≤ `max_chars`, no markdown, single retry). |
 | `speak.py` | `async_speak`: `media_player` power-on, volume and `tts.speak` with `blocking=True`. |
 | `coordinator.py` | `async_run(hass, config, emit)` — context → script → TTS pipeline. |
 | `state.py` | `StateStore` on top of `homeassistant.helpers.storage.Store` (`last_emission_date`, `last_result`, `next_alarm`). |
-| `scheduler.py` | Daily trigger, skip rules and next alarm computation. |
+| `scheduler.py` | Daily trigger, skip rules, `time_entity`, holiday resolution and next alarm computation. |
 | `switch.py` / `sensor.py` | Entity platforms. |
 
 The minimum supported HA version is **2025.2** (it introduces
@@ -76,6 +78,7 @@ config.example.yaml           # Legacy YAML config (deprecated migration path on
 custom_components/buenosdias/ # The integration (HA code)
 tests/                        # pytest suite
 pyproject.toml                # Packaging for development/venv
+CURSED_KNOWLEDGE.md           # Integration-specific pitfalls we learned the hard way
 ```
 
 ## Development Setup
@@ -106,10 +109,18 @@ for real `hass` fixtures that exercise the config flow end to end.
 ## Usage
 
 Configuration is done through a **UI config flow** (Settings → Devices &
-Services → Add Integration → "Buenos Días"): an initial form for the LLM
-connection, then an options flow to tune TTS, sources (weather, calendar,
-sensors, RSS feeds), the schedule and the persona. The API key stays in the
-entry `data` and is never logged or exposed via options.
+Services → Add Integration → "Buenos Días"). The initial steps capture the
+**LLM connection**: pick a conversation agent or an OpenAI-compatible endpoint
+(base URL + model + API key, validated with a live `GET /models` probe). The
+**options flow** then tunes everything else, section by section: TTS, sources
+(weather, calendar, sensors), RSS feeds (add/edit/remove inline), the schedule
+and the persona. The API key stays in the entry `data` and is never logged or
+exposed via options.
+
+Changing the LLM connection later is done from the integration's "Reconfigure
+entry" menu; if the stored key gets rejected, the integration automatically
+starts a **reauthentication flow** (see `_async_notify_reauth` in
+`__init__.py`).
 
 Legacy YAML (`config.example.yaml`) is deprecated: a `buenosdias:` block only
 triggers a one-time import into a config entry at startup (see `async_setup`
