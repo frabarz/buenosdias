@@ -1,13 +1,13 @@
 {
   "domain": "buenosdias",
   "name": "Buenos Días",
-  "documentation": "https://github.com/frabarz/buenosdias",
-  "issue_tracker": "https://github.com/frabarz/buenosdias/issues",
   "codeowners": ["@frabarz"],
   "config_flow": true,
-  "single_config_entry": true,
+  "documentation": "https://github.com/frabarz/buenosdias",
   "integration_type": "service",
   "iot_class": "local_polling",
-  "version": "0.3.2",
-  "requirements": ["feedparser", "httpx"]
+  "issue_tracker": "https://github.com/frabarz/buenosdias/issues",
+  "requirements": ["feedparser", "httpx"],
+  "single_config_entry": true,
+  "version": "0.3.2"
 }
