@@ -112,11 +112,11 @@ The integration is then invoked through HA services:
 - `buenosdias.generate` — generates the script without playing it (dry-run).
 - `buenosdias.emit` — full pipeline: context → script → TTS.
 
-Entities:
+Entities (all grouped under the "Buenos Días" device):
 
-- `switch.buenosdias_enabled` — enables/disables the alarm.
-- `sensor.buenosdias_last_status` — result of the last playback.
-- `sensor.buenosdias_next_alarm` — next alarm time.
+- `switch.buenos_dias_enabled` — enables/disables the alarm.
+- `sensor.buenos_dias_last_status` — result of the last playback.
+- `sensor.buenos_dias_next_alarm` — next alarm time.
 
 ## Testing
 

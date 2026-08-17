@@ -17,8 +17,8 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://tangled.org/frabarz.cl/buenosdias"
-Issues = "https://tangled.org/frabarz.cl/buenosdias/issues"
+Repository = "https://github.com/frabarz/buenosdias"
+Issues = "https://github.com/frabarz/buenosdias/issues"
 
 [tool.setuptools]
 packages = ["custom_components", "custom_components.buenosdias"]

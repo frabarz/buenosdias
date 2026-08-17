@@ -32,7 +32,7 @@ spoken alarm, with no external services.
 ### Manual (HACS / custom_components)
 
 ```sh
-git clone https://tangled.org/frabarz.cl/buenosdias buenosdias
+git clone https://github.com/frabarz/buenosdias buenosdias
 cp -r buenosdias/custom_components/buenosdias <hass_config>/custom_components/
 ```
 
@@ -40,7 +40,7 @@ cp -r buenosdias/custom_components/buenosdias <hass_config>/custom_components/
 
 ```nix
 {
-  inputs.buenosdias.url = "git+https://tangled.org/frabarz.cl/buenosdias.git";
+  inputs.buenosdias.url = "github:frabarz/buenosdias";
   outputs = { self, nixpkgs, buenosdias, ... }:
     let system = "x86_64-linux"; in {
       nixosConfigurations.my = nixpkgs.lib.nixosSystem {
@@ -102,6 +102,8 @@ Spanish persona produces a Spanish morning show:
 
 | Entity | Description |
 | --- | --- |
-| `switch.buenosdias_enabled` | Pauses/resumes the daily alarm. |
-| `sensor.buenosdias_last_status` | Result of the last playback (`ok` / error) and date. |
-| `sensor.buenosdias_next_alarm` | Next alarm time (ISO-8601). |
+| `switch.buenos_dias_enabled` | Pauses/resumes the daily alarm. |
+| `sensor.buenos_dias_last_status` | Result of the last playback (`ok` / error) and date. |
+| `sensor.buenos_dias_next_alarm` | Next alarm time (ISO-8601). |
+
+All entities are grouped under the "Buenos Días" device.

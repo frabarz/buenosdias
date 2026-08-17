@@ -1,4 +1,19 @@
 {
+  "entity": {
+    "switch": {
+      "enabled": {
+        "name": "Activada"
+      }
+    },
+    "sensor": {
+      "last_status": {
+        "name": "Último estado"
+      },
+      "next_alarm": {
+        "name": "Próxima alarma"
+      }
+    }
+  },
   "config": {
     "step": {
       "user": {
