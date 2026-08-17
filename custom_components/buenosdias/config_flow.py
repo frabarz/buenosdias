@@ -149,7 +149,10 @@ STEP_LLM_OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_MAX_CHARS): NumberSelector(
             NumberSelectorConfig(
-                min=100, max=20000, step=100, mode=NumberSelectorMode.BOX,
+                min=100,
+                max=20000,
+                step=100,
+                mode=NumberSelectorMode.BOX,
             ),
         ),
     },
@@ -244,7 +247,9 @@ STEP_RSS_EDIT_SCHEMA = STEP_RSS_FEED_SCHEMA.extend(
 
 
 async def _async_validate_connection(
-    hass: HomeAssistant, base_url: str, api_key: str | None,
+    hass: HomeAssistant,
+    base_url: str,
+    api_key: str | None,
 ) -> str | None:
     """Probe an OpenAI-compatible endpoint and return an error key or None."""
     url = f"{base_url.rstrip('/')}/models"
@@ -254,7 +259,9 @@ async def _async_validate_connection(
     try:
         client = httpx_client.get_async_client(hass, verify_ssl=True)
         response = await client.get(
-            url, headers=headers, timeout=httpx.Timeout(CONNECTION_TIMEOUT),
+            url,
+            headers=headers,
+            timeout=httpx.Timeout(CONNECTION_TIMEOUT),
         )
         response.raise_for_status()
     except httpx.HTTPStatusError as err:
@@ -313,7 +320,8 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         return BuenosdiasOptionsFlowHandler(config_entry)
 
     async def async_step_user(
-        self, user_input: dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Handle the initial step: choose the LLM connection mode."""
         if user_input is not None:
@@ -331,7 +339,8 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_user_agent(
-        self, user_input: dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Handle the conversation agent step."""
         if user_input is not None:
@@ -346,7 +355,8 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_user_openai(
-        self, user_input: dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Handle the OpenAI-compatible endpoint step."""
         errors: dict[str, str] = {}
@@ -370,7 +380,9 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
                             .get(CONF_API_KEY, "")
                         )
                     error = await _async_validate_connection(
-                        self.hass, base_url, api_key,
+                        self.hass,
+                        base_url,
+                        api_key,
                     )
                     if error:
                         errors["base"] = error
@@ -395,6 +407,10 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_MODEL: openai.get(CONF_MODEL),
                 },
             ),
+            description_placeholders={
+                "base_url_example": openai.get(CONF_BASE_URL)
+                or "http://localhost:11434/v1",
+            },
             errors=errors,
         )
 
@@ -405,18 +421,21 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         if self.source == SOURCE_RECONFIGURE:
             self._abort_if_unique_id_mismatch()
             return self.async_update_reload_and_abort(
-                self._get_reconfigure_entry(), data_updates=entry_data,
+                self._get_reconfigure_entry(),
+                data_updates=entry_data,
             )
         if self.source == SOURCE_REAUTH:
             self._abort_if_unique_id_mismatch()
             return self.async_update_reload_and_abort(
-                self._get_reauth_entry(), data_updates=entry_data,
+                self._get_reauth_entry(),
+                data_updates=entry_data,
             )
         self._abort_if_unique_id_configured()
         return self.async_create_entry(title="Buenos Días", data=entry_data)
 
     async def async_step_import(
-        self, user_input: Mapping[str, Any] | None = None,
+        self,
+        user_input: Mapping[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Import a YAML configuration into a config entry."""
         if user_input is None:
@@ -445,7 +464,8 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_reconfigure(
-        self, user_input: dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Reconfigure the LLM connection of an existing entry."""
         await self.async_set_unique_id(DOMAIN)
@@ -453,13 +473,15 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
         return await self.async_step_user(user_input)
 
     async def async_step_reauth(
-        self, entry_data: Mapping[str, Any],
+        self,
+        entry_data: Mapping[str, Any],
     ) -> ConfigFlowResult:
         """Handle reauthentication when the stored API key is invalid."""
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Dialog that asks for a new API key."""
         errors: dict[str, str] = {}
@@ -486,7 +508,8 @@ class BuenosdiasConfigFlow(ConfigFlow, domain=DOMAIN):
                     },
                 }
                 return self.async_update_reload_and_abort(
-                    entry, data_updates=data_updates,
+                    entry,
+                    data_updates=data_updates,
                 )
 
         return self.async_show_form(
@@ -595,7 +618,8 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
             idx = i
 
             async def _step(
-                user_input: dict[str, Any] | None = None, _idx: int = idx,
+                user_input: dict[str, Any] | None = None,
+                _idx: int = idx,
             ) -> ConfigFlowResult:
                 return await self.async_step_rss_edit(user_input, _idx)
 
@@ -604,7 +628,8 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
     # ---------- main menu ----------
 
     async def async_step_init(
-        self, user_input: dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Choose which part of the configuration to edit."""
         return self.async_show_menu(
@@ -634,7 +659,8 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="llm",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_LLM_OPTIONS_SCHEMA, suggested,
+                STEP_LLM_OPTIONS_SCHEMA,
+                suggested,
             ),
         )
 
@@ -656,7 +682,8 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="tts",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_TTS_OPTIONS_SCHEMA, self._current_options().get(CONF_TTS, {}),
+                STEP_TTS_OPTIONS_SCHEMA,
+                self._current_options().get(CONF_TTS, {}),
             ),
         )
 
@@ -678,7 +705,8 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="sources",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_SOURCES_OPTIONS_SCHEMA, current_sources,
+                STEP_SOURCES_OPTIONS_SCHEMA,
+                current_sources,
             ),
         )
 
@@ -710,7 +738,9 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         )
 
     async def async_step_rss_edit(
-        self, user_input: dict[str, Any] | None = None, index: int | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
+        index: int | None = None,
     ):
         """Edit or remove an existing feed."""
         self._feed_index = index if index is not None else self._feed_index
@@ -735,7 +765,9 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
                 return self._replace_options(options)
         if errors:
             return self.async_show_form(
-                step_id="rss_edit", data_schema=STEP_RSS_EDIT_SCHEMA, errors=errors,
+                step_id="rss_edit",
+                data_schema=STEP_RSS_EDIT_SCHEMA,
+                errors=errors,
             )
         feed = feeds[feed_index]
         suggested = {
@@ -749,7 +781,8 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="rss_edit",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_RSS_EDIT_SCHEMA, suggested,
+                STEP_RSS_EDIT_SCHEMA,
+                suggested,
             ),
         )
 
@@ -789,7 +822,8 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="schedule",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_SCHEDULE_OPTIONS_SCHEMA, suggested,
+                STEP_SCHEDULE_OPTIONS_SCHEMA,
+                suggested,
             ),
             errors=errors,
         )
@@ -806,6 +840,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="persona",
             data_schema=self.add_suggested_values_to_schema(
-                STEP_PERSONA_OPTIONS_SCHEMA, suggested,
+                STEP_PERSONA_OPTIONS_SCHEMA,
+                suggested,
             ),
         )

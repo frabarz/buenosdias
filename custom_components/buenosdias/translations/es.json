@@ -45,7 +45,7 @@
           "api_key": "Clave de API"
         },
         "data_description": {
-          "base_url": "Punto final compatible con OpenAI, p. ej. http://localhost:11434/v1 o https://openrouter.ai/api/v1.",
+          "base_url": "Punto final compatible con OpenAI, p. ej. una instancia local de Ollama en {base_url_example} o un proveedor en la nube como OpenRouter.",
           "model": "Nombre del modelo usado por el punto final, p. ej. openrouter/free.",
           "api_key": "Opcional. Obligatoria para proveedores en la nube como OpenRouter o Groq. Déjela vacía al reconfigurar para conservar la almacenada."
         }

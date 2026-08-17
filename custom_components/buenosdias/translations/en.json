@@ -45,7 +45,7 @@
           "api_key": "API key"
         },
         "data_description": {
-          "base_url": "OpenAI-compatible endpoint, e.g. http://localhost:11434/v1 or https://openrouter.ai/api/v1.",
+          "base_url": "OpenAI-compatible endpoint, e.g. a local Ollama instance at {base_url_example} or a cloud provider such as OpenRouter.",
           "model": "Model name used by the endpoint, e.g. openrouter/free.",
           "api_key": "Optional. Required for cloud providers such as OpenRouter or Groq. Leave empty when reconfiguring to keep the stored key."
         }

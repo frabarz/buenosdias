@@ -11,12 +11,12 @@ MANIFEST = Path(__file__).parent.parent / "custom_components/buenosdias/manifest
 
 def test_manifest_valid():
     manifest = json.loads(MANIFEST.read_text())
+    assert "homeassistant" not in manifest
     assert manifest["domain"] == DOMAIN
     assert manifest["version"]
     assert manifest["config_flow"] is True
     assert manifest["single_config_entry"] is True
     assert manifest["integration_type"] == "service"
-    assert manifest["homeassistant"] == "2025.2.0"
 
 
 def test_yaml_setup_registers_nothing(fake_hass):

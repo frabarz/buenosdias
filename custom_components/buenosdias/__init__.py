@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.util import dt as dt_util
 
 from . import coordinator, scheduler, sources
+from .config_schema import CONFIG_SCHEMA as CONFIG_SCHEMA
 from .config_utils import build_config
 from .const import DOMAIN
 from .state import StateStore
@@ -156,7 +157,9 @@ async def _async_configure(
 
     data = hass.data[DOMAIN]
     data["unsub_scheduler"] = scheduler.async_setup_scheduler(
-        hass, config, async_on_alarm,
+        hass,
+        config,
+        async_on_alarm,
     )
 
 
@@ -178,7 +181,9 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     )
     hass.async_create_task(
         hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": SOURCE_IMPORT}, data=conf,
+            DOMAIN,
+            context={"source": SOURCE_IMPORT},
+            data=conf,
         ),
         "config entry import buenosdias",
     )

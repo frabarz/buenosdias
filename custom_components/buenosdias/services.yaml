@@ -4,7 +4,6 @@ context:
     Returns the collected context (weather, calendar, sensors, RSS) as JSON.
     Useful for debugging source collection.
   fields: {}
-  returns: response
 
 generate:
   name: Generate script
@@ -12,7 +11,6 @@ generate:
     Generates the "good morning" script with the configured LLM (dry-run) and
     returns it as the response, without playing any audio.
   fields: {}
-  returns: response
 
 emit:
   name: Play good morning
@@ -20,4 +18,3 @@ emit:
     Runs the full pipeline: gathers context, generates the script with the LLM
     and plays it via TTS on the configured media_player.
   fields: {}
-  returns: response
