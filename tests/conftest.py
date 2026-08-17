@@ -42,7 +42,7 @@ class FakeStore:
 def fake_trackers(monkeypatch):
     """Patch the heavy HA helpers used by async_setup.
 
-    - ``async_track_utc_time_change``: records the scheduler calls.
+    - ``async_track_time_change``: records the scheduler calls.
     - ``async_track_state_change_event``: records the time_entity listeners.
     - ``discovery.async_load_platform``: records the platform registration.
     Returns both records for the tests to inspect.
@@ -66,7 +66,7 @@ def fake_trackers(monkeypatch):
         return None
 
     monkeypatch.setattr(
-        "homeassistant.helpers.event.async_track_utc_time_change", fake_track
+        "homeassistant.helpers.event.async_track_time_change", fake_track
     )
     monkeypatch.setattr(
         "homeassistant.helpers.event.async_track_state_change_event",

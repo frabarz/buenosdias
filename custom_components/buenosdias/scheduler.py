@@ -211,7 +211,7 @@ def async_setup_scheduler(
         if alarm is None:
             return None
         hour, minute = alarm
-        return ha_event.async_track_utc_time_change(
+        return ha_event.async_track_time_change(
             hass,
             callback,
             hour=hour,
