@@ -11,6 +11,9 @@
       },
       "next_alarm": {
         "name": "Next alarm"
+      },
+      "last_script": {
+        "name": "Last script"
       }
     }
   },

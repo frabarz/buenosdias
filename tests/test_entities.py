@@ -5,6 +5,7 @@ import asyncio
 from conftest import FakeEntry, FakeStore
 from custom_components.buenosdias.const import DOMAIN
 from custom_components.buenosdias.sensor import (
+    BuenosdiasLastScriptSensor,
     BuenosdiasLastStatusSensor,
     BuenosdiasNextAlarmSensor,
 )
@@ -88,6 +89,24 @@ def test_sensor_next_alarm_scheduled(fake_hass):
     assert sensor.native_value == "2026-08-11T05:00:00+00:00"
 
 
+def test_sensor_last_script_without_scripts(fake_hass):
+    hass, _ = fake_hass()
+    store = StateStore(hass, store=FakeStore(None))
+    sensor = BuenosdiasLastScriptSensor(hass, store, FakeEntry())
+    assert sensor.native_value == "never"
+    assert sensor.unique_id == "buenosdias_last_script"
+    assert sensor.translation_key == "last_script"
+
+
+def test_sensor_last_script_after_generation(fake_hass):
+    hass, _ = fake_hass()
+    store = StateStore(hass, store=FakeStore(None))
+    sensor = BuenosdiasLastScriptSensor(hass, store, FakeEntry())
+    _run(store.async_set_last_script("Buenos días, hoy hace sol."))
+    sensor.refresh_from_store()
+    assert sensor.native_value == "Buenos días, hoy hace sol."
+
+
 def test_entities_share_device(fake_hass):
     hass, _ = fake_hass()
     hass.data[DOMAIN] = {"enabled": True}
@@ -96,6 +115,7 @@ def test_entities_share_device(fake_hass):
     switch = BuenosdiasEnabledSwitch(hass, entry)
     last_status = BuenosdiasLastStatusSensor(hass, store, entry)
     next_alarm = BuenosdiasNextAlarmSensor(hass, store, entry)
-    for entity in (switch, last_status, next_alarm):
+    last_script = BuenosdiasLastScriptSensor(hass, store, entry)
+    for entity in (switch, last_status, next_alarm, last_script):
         assert entity.device_info["identifiers"] == {(DOMAIN, "entry-device")}
         assert entity.has_entity_name is True

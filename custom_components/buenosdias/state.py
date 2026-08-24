@@ -19,6 +19,7 @@ class StateStore:
     - ``last_emission_date``: last date (YYYY-MM-DD) on which it was played.
     - ``last_result``: result of the last playback ("ok" or error description).
     - ``next_alarm``: next alarm time (ISO-8601, UTC) or None.
+    - ``last_script``: last generated radio script or None.
     """
 
     def __init__(
@@ -33,6 +34,7 @@ class StateStore:
             "last_emission_date": None,
             "last_result": None,
             "next_alarm": None,
+            "last_script": None,
         }
 
     @property
@@ -47,6 +49,10 @@ class StateStore:
     def next_alarm(self) -> str | None:
         return self._data["next_alarm"]
 
+    @property
+    def last_script(self) -> str | None:
+        return self._data["last_script"]
+
     async def async_load(self) -> None:
         """Load the persisted state (if any)."""
         loaded = await self._store.async_load()
@@ -57,6 +63,11 @@ class StateStore:
     async def async_set_next_alarm(self, next_alarm: str | None) -> None:
         """Update and persist only the next alarm time."""
         self._data["next_alarm"] = next_alarm
+        await self._store.async_save(dict(self._data))
+
+    async def async_set_last_script(self, script_text: str | None) -> None:
+        """Update and persist only the last generated script."""
+        self._data["last_script"] = script_text
         await self._store.async_save(dict(self._data))
 
     async def async_mark_emitted(

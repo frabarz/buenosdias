@@ -74,3 +74,5 @@ def test_generate_service_returns_script(fake_hass, monkeypatch):
     handler = registered[(DOMAIN, "generate")]
     result = asyncio.run(handler(None))
     assert result["script"] == "Good morning, it is sunny today."
+    store = hass.data[DOMAIN]["store"]
+    assert store.last_script == "Good morning, it is sunny today."

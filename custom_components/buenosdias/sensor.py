@@ -39,6 +39,7 @@ async def async_setup_entry(
     sensors = [
         BuenosdiasLastStatusSensor(hass, store, entry),
         BuenosdiasNextAlarmSensor(hass, store, entry),
+        BuenosdiasLastScriptSensor(hass, store, entry),
     ]
     hass.data[DOMAIN]["entities"].extend(sensors)
     async_add_entities(sensors)
@@ -97,3 +98,28 @@ class BuenosdiasNextAlarmSensor(SensorEntity):
     def refresh_from_store(self) -> None:
         """Sync the sensor with the persisted state."""
         self._attr_native_value = self._store.next_alarm or "not_scheduled"
+
+
+class BuenosdiasLastScriptSensor(SensorEntity):
+    """Sensor with the last generated radio script."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "last_script"
+    _attr_unique_id = "buenosdias_last_script"
+    _attr_should_poll = False
+    _attr_icon = "mdi:script-text-outline"
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        store: StateStore,
+        entry: Any,
+    ) -> None:
+        self.hass = hass
+        self._store = store
+        self._attr_device_info = _device_info(entry)
+        self.refresh_from_store()
+
+    def refresh_from_store(self) -> None:
+        """Sync the sensor with the persisted state."""
+        self._attr_native_value = self._store.last_script or "never"

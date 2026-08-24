@@ -55,6 +55,7 @@ def test_state_store_mark_emitted_persists():
             "last_emission_date": "2026-08-10",
             "last_result": "ok",
             "next_alarm": "2026-08-11T05:00:00+00:00",
+            "last_script": None,
         }
     ]
 
@@ -70,6 +71,7 @@ def test_state_store_set_next_alarm_persists():
             "last_emission_date": None,
             "last_result": None,
             "next_alarm": "2026-08-11T05:00:00+00:00",
+            "last_script": None,
         }
     ]
 
@@ -83,6 +85,30 @@ def test_state_store_set_next_alarm_none():
     _run(store.async_set_next_alarm(None))
     assert store.next_alarm is None
     assert store.last_emission_date == "2026-08-10"
+
+
+def test_state_store_set_last_script_persists():
+    fake_store = _FakeStore(None)
+    store = StateStore(_FakeHass(), store=fake_store)
+    _run(store.async_set_last_script("Buenos días, hoy hace sol."))
+    assert store.last_script == "Buenos días, hoy hace sol."
+    assert fake_store.saved == [
+        {
+            "last_emission_date": None,
+            "last_result": None,
+            "next_alarm": None,
+            "last_script": "Buenos días, hoy hace sol.",
+        }
+    ]
+
+
+def test_state_store_load_restores_last_script():
+    store = StateStore(
+        _FakeHass(),
+        store=_FakeStore({"last_script": "Hola"}),
+    )
+    _run(store.async_load())
+    assert store.last_script == "Hola"
 
 
 def test_state_store_mark_emitted_with_error():

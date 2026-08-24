@@ -39,7 +39,7 @@ servers:
 | `script.py` | Script generation and validation (non-empty, ≤ `max_chars`, no markdown, single retry). |
 | `speak.py` | `async_speak`: `media_player` power-on, volume and `tts.speak` with `blocking=True`. |
 | `coordinator.py` | `async_run(hass, config, emit)` — context → script → TTS pipeline. |
-| `state.py` | `StateStore` on top of `homeassistant.helpers.storage.Store` (`last_emission_date`, `last_result`, `next_alarm`). |
+| `state.py` | `StateStore` on top of `homeassistant.helpers.storage.Store` (`last_emission_date`, `last_result`, `next_alarm`, `last_script`). |
 | `scheduler.py` | Daily trigger, skip rules, `time_entity`, holiday resolution and next alarm computation. |
 | `switch.py` / `sensor.py` | Entity platforms. |
 
@@ -117,6 +117,7 @@ Entities (all grouped under the "Buenos Días" device):
 - `switch.buenos_dias_enabled` — enables/disables the alarm.
 - `sensor.buenos_dias_last_status` — result of the last playback.
 - `sensor.buenos_dias_next_alarm` — next alarm time.
+- `sensor.buenos_dias_last_script` — last generated radio script.
 
 ## Testing
 

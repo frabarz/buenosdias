@@ -86,6 +86,13 @@ async def _async_publish_next_alarm(hass: HomeAssistant, config: dict) -> None:
     _refresh_entities(hass)
 
 
+async def _async_record_script(hass: HomeAssistant, script_text: str) -> None:
+    """Persist the generated script and publish it to the sensors."""
+    store: StateStore = hass.data[DOMAIN]["store"]
+    await store.async_set_last_script(script_text)
+    _refresh_entities(hass)
+
+
 async def _async_configure(
     hass: HomeAssistant,
     config: dict,
@@ -114,6 +121,7 @@ async def _async_configure(
         except coordinator.PipelineError as err:
             _async_notify_reauth(hass, err)
             raise
+        await _async_record_script(hass, result["script"])
         return {"script": result["script"]}
 
     async def async_handle_emit(call: ServiceCall) -> dict[str, Any]:
@@ -123,6 +131,7 @@ async def _async_configure(
         except coordinator.PipelineError as err:
             _async_notify_reauth(hass, err)
             raise
+        await _async_record_script(hass, result["script"])
         return {"script": result["script"]}
 
     hass.services.async_register(
@@ -166,12 +175,14 @@ async def _async_configure(
             holiday_dates=holidays,
         )
         try:
-            await coordinator.async_run(hass, config)
+            pipeline = await coordinator.async_run(hass, config)
             result = "ok"
         except coordinator.PipelineError as err:
             _LOGGER.warning("buenosdias alarm failed: %s", err)
             _async_notify_reauth(hass, err)
             result = f"error: {err}"
+        else:
+            await _async_record_script(hass, pipeline["script"])
         await store.async_mark_emitted(
             local_today.isoformat(),
             result,
