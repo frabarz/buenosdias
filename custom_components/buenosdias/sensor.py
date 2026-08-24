@@ -82,7 +82,7 @@ class BuenosdiasNextAlarmSensor(SensorEntity):
     _attr_translation_key = "next_alarm"
     _attr_unique_id = "buenosdias_next_alarm"
     _attr_should_poll = False
-    _attr_icon = "mdi:clock-outline"
+    _attr_icon = "mdi:alarm"
 
     def __init__(
         self,

@@ -51,6 +51,15 @@ def test_switch_turn_on_enables(fake_hass, monkeypatch):
     assert hass.data[DOMAIN]["enabled"] is True
 
 
+def test_switch_icon_reflects_state(fake_hass, monkeypatch):
+    hass, _ = fake_hass()
+    hass.data[DOMAIN] = {"enabled": True}
+    switch = _make_switch(hass, monkeypatch)
+    assert switch.icon == "mdi:alarm"
+    _run(switch.async_turn_off())
+    assert switch.icon == "mdi:alarm-off"
+
+
 def test_sensor_last_status_without_emissions(fake_hass):
     hass, _ = fake_hass()
     store = StateStore(hass, store=FakeStore(None))

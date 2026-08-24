@@ -46,12 +46,16 @@ class BuenosdiasEnabledSwitch(SwitchEntity):
     _attr_translation_key = "enabled"
     _attr_unique_id = "buenosdias_enabled"
     _attr_should_poll = False
-    _attr_icon = "mdi:alarm"
 
     def __init__(self, hass: HomeAssistant, entry: Any) -> None:
         self.hass = hass
         self._attr_device_info = _device_info(entry)
         self._attr_is_on = bool(hass.data[DOMAIN].get("enabled", True))
+
+    @property
+    def icon(self) -> str:
+        """Alarm icon reflecting whether the alarm is enabled."""
+        return "mdi:alarm" if self.is_on else "mdi:alarm-off"
 
     async def async_turn_on(self, **kwargs) -> None:
         """Enable the alarm."""
