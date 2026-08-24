@@ -58,6 +58,34 @@ def _async_notify_reauth(hass: HomeAssistant, err: Exception) -> None:
     entry.async_start_reauth(hass)
 
 
+def _refresh_entities(hass: HomeAssistant) -> None:
+    """Sync every registered entity with the persisted state."""
+    for entity in hass.data[DOMAIN]["entities"]:
+        refresh = getattr(entity, "refresh_from_store", None)
+        if refresh:
+            refresh()
+        entity.async_write_ha_state()
+
+
+async def _async_publish_next_alarm(hass: HomeAssistant, config: dict) -> None:
+    """Recompute the next alarm time and publish it to the sensors."""
+    store: StateStore = hass.data[DOMAIN]["store"]
+    alarm = scheduler.read_alarm_time(hass, config)
+    if alarm is None:
+        await store.async_set_next_alarm(None)
+    else:
+        holidays = await scheduler.async_holiday_dates(hass, config)
+        await store.async_set_next_alarm(
+            scheduler.next_fire_time(
+                config,
+                last_emitted_date=store.last_emission_date,
+                alarm=alarm,
+                holiday_dates=holidays,
+            )
+        )
+    _refresh_entities(hass)
+
+
 async def _async_configure(
     hass: HomeAssistant,
     config: dict,
@@ -149,18 +177,16 @@ async def _async_configure(
             result,
             next_alarm=next_alarm,
         )
-        for entity in data["entities"]:
-            refresh = getattr(entity, "refresh_from_store", None)
-            if refresh:
-                refresh()
-            entity.async_write_ha_state()
+        _refresh_entities(hass)
 
     data = hass.data[DOMAIN]
     data["unsub_scheduler"] = scheduler.async_setup_scheduler(
         hass,
         config,
         async_on_alarm,
+        on_rearm=lambda: _async_publish_next_alarm(hass, config),
     )
+    data["refresh_next_alarm"] = lambda: _async_publish_next_alarm(hass, config)
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -198,6 +224,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN]["unsub_update_listener"] = entry.add_update_listener(
         _async_update_listener,
     )
+    hass.async_create_task(hass.data[DOMAIN]["refresh_next_alarm"]())
     return True
 
 

@@ -59,6 +59,32 @@ def test_state_store_mark_emitted_persists():
     ]
 
 
+def test_state_store_set_next_alarm_persists():
+    fake_store = _FakeStore(None)
+    store = StateStore(_FakeHass(), store=fake_store)
+    _run(store.async_set_next_alarm("2026-08-11T05:00:00+00:00"))
+    assert store.next_alarm == "2026-08-11T05:00:00+00:00"
+    assert store.last_emission_date is None
+    assert fake_store.saved == [
+        {
+            "last_emission_date": None,
+            "last_result": None,
+            "next_alarm": "2026-08-11T05:00:00+00:00",
+        }
+    ]
+
+
+def test_state_store_set_next_alarm_none():
+    store = StateStore(
+        _FakeHass(),
+        store=_FakeStore({"last_emission_date": "2026-08-10"}),
+    )
+    _run(store.async_load())
+    _run(store.async_set_next_alarm(None))
+    assert store.next_alarm is None
+    assert store.last_emission_date == "2026-08-10"
+
+
 def test_state_store_mark_emitted_with_error():
     store = StateStore(_FakeHass(), store=_FakeStore(None))
     _run(store.async_mark_emitted("2026-08-10", "error: tts broken"))

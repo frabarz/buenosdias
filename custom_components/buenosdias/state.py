@@ -54,6 +54,11 @@ class StateStore:
             for key in self._data:
                 self._data[key] = loaded.get(key) or None
 
+    async def async_set_next_alarm(self, next_alarm: str | None) -> None:
+        """Update and persist only the next alarm time."""
+        self._data["next_alarm"] = next_alarm
+        await self._store.async_save(dict(self._data))
+
     async def async_mark_emitted(
         self,
         date_str: str,

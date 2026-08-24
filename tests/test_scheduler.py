@@ -207,11 +207,42 @@ def test_async_setup_scheduler_reregisters_on_change(
 
     hass.state_dict["sensor.alarm"] = type("S", (), {"state": "08:45"})()
     action = fake_trackers.state_change_calls[-1]["action"]
-    asyncio.run(action(object()))
+    action(object())
 
     assert len(fake_trackers.track_calls) == before + 1
     assert fake_trackers.track_calls[-1]["hour"] == 8
     assert fake_trackers.track_calls[-1]["minute"] == 45
+
+
+def test_async_setup_scheduler_on_rearm_called_on_change(
+    fake_hass, fake_trackers
+):
+    hass, _ = fake_hass(
+        states={"sensor.alarm": type("S", (), {"state": "07:30"})()}
+    )
+    tasks = []
+    hass.async_create_task = lambda coro: tasks.append(coro)
+    rearmed = []
+
+    async def on_rearm():
+        rearmed.append(True)
+
+    scheduler.async_setup_scheduler(
+        hass,
+        {CONF_SCHEDULE: {CONF_TIME_ENTITY: "sensor.alarm"}},
+        lambda now: None,
+        on_rearm=on_rearm,
+    )
+    hass.state_dict["sensor.alarm"] = type("S", (), {"state": "08:45"})()
+    action = fake_trackers.state_change_calls[-1]["action"]
+
+    async def _fire() -> None:
+        action(object())
+        await asyncio.gather(*tasks)
+
+    assert rearmed == []
+    asyncio.run(_fire())
+    assert rearmed == [True]
 
 
 def test_async_setup_scheduler_without_entity_no_listener(fake_trackers):
@@ -281,6 +312,43 @@ def test_async_setup_time_entity_missing_does_not_arm(fake_hass, fake_trackers):
         )
     )
     assert fake_trackers.track_calls == []
+
+
+def test_time_entity_change_updates_next_alarm(fake_hass, fake_trackers):
+    from conftest import FakeEntry
+
+    from homeassistant.util import dt as dt_util
+
+    hass, _ = fake_hass(
+        states={"sensor.alarm": type("S", (), {"state": "07:30"})()}
+    )
+    tasks = []
+    hass.async_create_task = lambda coro: tasks.append(coro)
+    async def _drain() -> None:
+        await asyncio.gather(*tasks)
+
+    asyncio.run(
+        async_setup_entry(
+            hass,
+            FakeEntry(options={CONF_SCHEDULE: {CONF_TIME_ENTITY: "sensor.alarm"}}),
+        )
+    )
+    asyncio.run(_drain())
+
+    hass.state_dict["sensor.alarm"] = type("S", (), {"state": "09:15"})()
+    action = fake_trackers.state_change_calls[-1]["action"]
+    tasks.clear()
+
+    async def _fire() -> None:
+        action(object())
+        await asyncio.gather(*tasks)
+
+    asyncio.run(_fire())
+
+    next_alarm = hass.data[DOMAIN]["store"].next_alarm
+    assert next_alarm is not None
+    local = dt_util.as_local(dt_util.parse_datetime(next_alarm))
+    assert (local.hour, local.minute) == (9, 15)
 
 
 def test_alarm_fires_and_marks_emitted(fake_hass, fake_trackers, monkeypatch):

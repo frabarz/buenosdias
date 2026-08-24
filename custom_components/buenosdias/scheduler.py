@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from datetime import date, datetime, time, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.calendar.const import DATA_COMPONENT as CALENDAR_COMPONENT
 from homeassistant.helpers import event as ha_event
@@ -198,10 +198,13 @@ def async_setup_scheduler(
     hass: HomeAssistant,
     config: dict,
     callback: Callable,
+    on_rearm: Callable[[], Any] | None = None,
 ) -> Callable[[], None]:
     """Register the daily trigger; with time_entity it re-registers on state change.
 
-    Returns the cancellation function for the scheduler and the state listener.
+    ``on_rearm`` (if given, a coroutine function) is scheduled as a task after
+    each re-registration triggered by a time_entity state change. Returns the
+    cancellation function for the scheduler and the state listener.
     """
     schedule = config.get(CONF_SCHEDULE, {})
     time_entity = schedule.get(CONF_TIME_ENTITY, "")
@@ -224,16 +227,18 @@ def async_setup_scheduler(
 
     if time_entity:
 
-        async def async_on_state_change(event) -> None:
+        def _on_state_change(event) -> None:
             nonlocal unsub_time
             if unsub_time is not None:
                 unsub_time()
             unsub_time = _arm()
+            if on_rearm is not None:
+                hass.async_create_task(on_rearm())
 
         unsub_state = ha_event.async_track_state_change_event(
             hass,
             [time_entity],
-            async_on_state_change,
+            _on_state_change,
         )
 
     def async_unsub() -> None:
