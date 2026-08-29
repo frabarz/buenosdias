@@ -10,10 +10,7 @@
         "name": "Dernier statut"
       },
       "next_alarm": {
-        "name": "Prochaine alarme"
-      },
-      "last_script": {
-        "name": "Dernier script"
+        "name": "Dernier réveil"
       }
     }
   },

@@ -103,8 +103,7 @@ Spanish persona produces a Spanish morning show:
 | Entity | Description |
 | --- | --- |
 | `switch.buenos_dias_enabled` | Pauses/resumes the daily alarm. |
-| `sensor.buenos_dias_last_status` | Result of the last playback (`ok` / error) and date. |
+| `sensor.buenos_dias_last_status` | Result of the last playback (`ok` / error) and date. The full last script is in its `last_script` attribute. |
 | `sensor.buenos_dias_next_alarm` | Next alarm time (ISO-8601). |
-| `sensor.buenos_dias_last_script` | Last generated radio script. |
 
 All entities are grouped under the "Buenos Días" device.

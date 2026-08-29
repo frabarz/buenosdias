@@ -11,9 +11,6 @@
       },
       "next_alarm": {
         "name": "Nächster Wecker"
-      },
-      "last_script": {
-        "name": "Letztes Skript"
       }
     }
   },

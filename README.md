@@ -115,9 +115,8 @@ The integration is then invoked through HA services:
 Entities (all grouped under the "Buenos Días" device):
 
 - `switch.buenos_dias_enabled` — enables/disables the alarm.
-- `sensor.buenos_dias_last_status` — result of the last playback.
+- `sensor.buenos_dias_last_status` — result of the last playback. The full last generated script is exposed in its `last_script` attribute.
 - `sensor.buenos_dias_next_alarm` — next alarm time.
-- `sensor.buenos_dias_last_script` — last generated radio script.
 
 ## Testing
 

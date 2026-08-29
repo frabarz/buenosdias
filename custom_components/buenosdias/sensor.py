@@ -39,7 +39,6 @@ async def async_setup_entry(
     sensors = [
         BuenosdiasLastStatusSensor(hass, store, entry),
         BuenosdiasNextAlarmSensor(hass, store, entry),
-        BuenosdiasLastScriptSensor(hass, store, entry),
     ]
     hass.data[DOMAIN]["entities"].extend(sensors)
     async_add_entities(sensors)
@@ -47,7 +46,13 @@ async def async_setup_entry(
 
 
 class BuenosdiasLastStatusSensor(SensorEntity):
-    """Sensor with the result of the last playback."""
+    """Sensor with the result of the last playback.
+
+    The last generated script is exposed in the ``last_script`` attribute.
+    HA limits entity state to 255 characters, but attributes are not
+    length-limited, so the full script is always retrievable:
+    ``state_attr('sensor.buenos_dias_last_status', 'last_script')``
+    """
 
     _attr_has_entity_name = True
     _attr_translation_key = "last_status"
@@ -72,6 +77,7 @@ class BuenosdiasLastStatusSensor(SensorEntity):
         self._attr_extra_state_attributes = {
             "last_emission_date": self._store.last_emission_date,
             "next_alarm": self._store.next_alarm,
+            "last_script": self._store.last_script,
         }
 
 
@@ -98,28 +104,3 @@ class BuenosdiasNextAlarmSensor(SensorEntity):
     def refresh_from_store(self) -> None:
         """Sync the sensor with the persisted state."""
         self._attr_native_value = self._store.next_alarm or "not_scheduled"
-
-
-class BuenosdiasLastScriptSensor(SensorEntity):
-    """Sensor with the last generated radio script."""
-
-    _attr_has_entity_name = True
-    _attr_translation_key = "last_script"
-    _attr_unique_id = "buenosdias_last_script"
-    _attr_should_poll = False
-    _attr_icon = "mdi:script-text-outline"
-
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        store: StateStore,
-        entry: Any,
-    ) -> None:
-        self.hass = hass
-        self._store = store
-        self._attr_device_info = _device_info(entry)
-        self.refresh_from_store()
-
-    def refresh_from_store(self) -> None:
-        """Sync the sensor with the persisted state."""
-        self._attr_native_value = self._store.last_script or "never"

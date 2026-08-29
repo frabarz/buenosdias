@@ -11,9 +11,6 @@
       },
       "next_alarm": {
         "name": "Próxima alarma"
-      },
-      "last_script": {
-        "name": "Último guion"
       }
     }
   },
