@@ -79,19 +79,19 @@
         "title": "Options de Buenos Días",
         "description": "Choisissez la partie de la configuration à modifier. La connexion LLM se modifie via l'étape Reconfigurer dans l'aperçu de l'intégration.",
         "menu_options": {
-          "llm": "LLM",
+          "llm": "Script et voix",
           "tts": "Synthèse vocale et lecteur",
           "sources": "Sources",
           "rss_feeds": "Flux RSS",
-          "schedule": "Programmation",
-          "persona": "Persona"
+          "schedule": "Programmation"
         }
       },
       "llm": {
-        "title": "Options du LLM",
-        "description": "Longueur maximale de sortie du script généré. Les paramètres de connexion se modifient via Reconfigurer.",
+        "title": "Script et voix",
+        "description": "La limite de longueur du script généré et la persona qui contrôle sa langue et son style. Les paramètres de connexion se modifient via Reconfigurer.",
         "data": {
-          "max_chars": "Longueur maximale du script (caractères)"
+          "max_chars": "Longueur maximale du script (caractères)",
+          "persona": "Persona"
         }
       },
       "tts": {
@@ -179,10 +179,6 @@
           "feriados": "Dates auxquelles l'alarme est ignorée, une date ISO (AAAA-MM-JJ) par ligne.",
           "holiday_calendar": "Entité de calendrier facultative (ex. de l'intégration Holiday de Home Assistant) dont les événements sur la journée comptent comme jours fériés et ignorent l'alarme. Laissez vide pour n'utiliser que les dates manuelles ci-dessus."
         }
-      },
-      "persona": {
-        "title": "Persona",
-        "description": "La persona contrôle entièrement la langue et le style du script parlé."
       }
     },
     "error": {

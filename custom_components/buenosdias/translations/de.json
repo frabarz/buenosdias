@@ -79,19 +79,19 @@
         "title": "Optionen von Buenos Días",
         "description": "Wählen Sie, welchen Teil der Konfiguration Sie bearbeiten möchten. Die LLM-Verbindung wird über den Schritt „Neu konfigurieren“ in der Integrationsübersicht bearbeitet.",
         "menu_options": {
-          "llm": "LLM",
+          "llm": "Skript und Stimme",
           "tts": "TTS und Player",
           "sources": "Quellen",
           "rss_feeds": "RSS-Feeds",
-          "schedule": "Zeitplan",
-          "persona": "Persona"
+          "schedule": "Zeitplan"
         }
       },
       "llm": {
-        "title": "LLM-Optionen",
-        "description": "Maximale Ausgabelänge des generierten Skripts. Die Verbindungseinstellungen werden über „Neu konfigurieren“ bearbeitet.",
+        "title": "Skript und Stimme",
+        "description": "Die Längengrenze des generierten Skripts und die Persona, die Sprache und Stil bestimmt. Die Verbindungseinstellungen werden über „Neu konfigurieren“ bearbeitet.",
         "data": {
-          "max_chars": "Maximale Skriptlänge (Zeichen)"
+          "max_chars": "Maximale Skriptlänge (Zeichen)",
+          "persona": "Persona"
         }
       },
       "tts": {
@@ -179,10 +179,6 @@
           "feriados": "Daten, an denen der Alarm ausgelassen wird, ein ISO-Datum (JJJJ-MM-TT) pro Zeile.",
           "holiday_calendar": "Optionale Kalender-Entität (z. B. aus der Holiday-Integration von Home Assistant), deren ganztägige Einträge als Feiertage zählen und den Alarm auslassen. Leer lassen, um nur die manuellen Daten oben zu verwenden."
         }
-      },
-      "persona": {
-        "title": "Persona",
-        "description": "Die Persona bestimmt vollständig Sprache und Stil des gesprochenen Skripts."
       }
     },
     "error": {

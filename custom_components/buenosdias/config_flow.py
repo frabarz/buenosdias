@@ -155,6 +155,9 @@ STEP_LLM_OPTIONS_SCHEMA = vol.Schema(
                 mode=NumberSelectorMode.BOX,
             ),
         ),
+        vol.Optional(CONF_PERSONA, default=""): TextSelector(
+            TextSelectorConfig(multiline=True),
+        ),
     },
 )
 
@@ -210,10 +213,6 @@ STEP_SCHEDULE_OPTIONS_SCHEMA = vol.Schema(
         ),
         vol.Optional(CONF_SKIP_IF_EMITTED, default=True): BooleanSelector(),
     },
-)
-
-STEP_PERSONA_OPTIONS_SCHEMA = vol.Schema(
-    {vol.Optional(CONF_PERSONA, default=""): TextSelector()},
 )
 
 STEP_RSS_FEED_SCHEMA = vol.Schema(
@@ -640,22 +639,25 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
                 "sources",
                 "rss_feeds",
                 "schedule",
-                "persona",
             ],
         )
 
     # ---------- llm ----------
 
     async def async_step_llm(self, user_input=None):
-        """Edit the script length; connection settings live in Reconfigure."""
+        """Edit the script length and persona; connection settings live in Reconfigure."""
         if user_input is not None:
             options = self._current_options()
             options.setdefault(CONF_LLM, {})
             options[CONF_LLM][CONF_MAX_CHARS] = int(user_input[CONF_MAX_CHARS])
+            options[CONF_PERSONA] = (user_input.get(CONF_PERSONA) or "").strip()
             return self._replace_options(options)
 
         llm = self._current_options().get(CONF_LLM, {})
-        suggested = {CONF_MAX_CHARS: llm.get(CONF_MAX_CHARS, 2000)}
+        suggested = {
+            CONF_MAX_CHARS: llm.get(CONF_MAX_CHARS, 2000),
+            CONF_PERSONA: self._current_options().get(CONF_PERSONA, ""),
+        }
         return self.async_show_form(
             step_id="llm",
             data_schema=self.add_suggested_values_to_schema(
@@ -826,21 +828,4 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
                 suggested,
             ),
             errors=errors,
-        )
-
-    # ---------- persona ----------
-
-    async def async_step_persona(self, user_input=None):
-        """Edit the persona that controls the script style."""
-        if user_input is not None:
-            options = self._current_options()
-            options[CONF_PERSONA] = (user_input.get(CONF_PERSONA) or "").strip()
-            return self._replace_options(options)
-        suggested = {CONF_PERSONA: self._current_options().get(CONF_PERSONA, "")}
-        return self.async_show_form(
-            step_id="persona",
-            data_schema=self.add_suggested_values_to_schema(
-                STEP_PERSONA_OPTIONS_SCHEMA,
-                suggested,
-            ),
         )

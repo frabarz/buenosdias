@@ -67,7 +67,6 @@ async def test_init_shows_menu(hass):
         "sources",
         "rss_feeds",
         "schedule",
-        "persona",
     }
 
 
@@ -185,14 +184,16 @@ async def test_schedule_step_accepts_hhmmss_time(hass):
     assert entry.options[CONF_SCHEDULE][CONF_TIME] == "08:00"
 
 
-async def test_persona_step_updates(hass):
+async def test_llm_step_updates_persona(hass):
     entry = await _make_entry(hass)
     result = await _start_options(hass, entry.entry_id)
-    result = await _navigate(hass, result["flow_id"], "persona")
+    result = await _navigate(hass, result["flow_id"], "llm")
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {CONF_PERSONA: "Eres un locutor de radio madrileño."}
+        result["flow_id"],
+        {CONF_MAX_CHARS: 3000, CONF_PERSONA: "Eres un locutor de radio madrileño."},
     )
     assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert entry.options[CONF_LLM][CONF_MAX_CHARS] == 3000
     assert entry.options[CONF_PERSONA] == "Eres un locutor de radio madrileño."
 
 

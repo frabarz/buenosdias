@@ -79,19 +79,19 @@
         "title": "Opciones de Buenos Días",
         "description": "Elija qué parte de la configuración desea editar. La conexión del LLM se edita mediante el paso Reconfigurar en la vista general de la integración.",
         "menu_options": {
-          "llm": "LLM",
+          "llm": "Guion y voz",
           "tts": "TTS y reproductor",
           "sources": "Fuentes",
           "rss_feeds": "Fuentes RSS",
-          "schedule": "Programación",
-          "persona": "Persona"
+          "schedule": "Programación"
         }
       },
       "llm": {
-        "title": "Opciones del LLM",
-        "description": "Longitud máxima de salida del guion generado. La configuración de conexión se edita mediante Reconfigurar.",
+        "title": "Guion y voz",
+        "description": "El límite de longitud del guion generado y la persona que controla su idioma y estilo. La configuración de conexión se edita mediante Reconfigurar.",
         "data": {
-          "max_chars": "Longitud máxima del guion (caracteres)"
+          "max_chars": "Longitud máxima del guion (caracteres)",
+          "persona": "Persona"
         }
       },
       "tts": {
@@ -179,10 +179,6 @@
           "feriados": "Fechas en las que se omite la alarma, una fecha ISO (AAAA-MM-DD) por línea.",
           "holiday_calendar": "Entidad de calendario opcional (p. ej. de la integración Holiday de Home Assistant) cuyos eventos de día completo cuentan como festivos y omiten la alarma. Déjela vacía para usar solo las fechas manuales de arriba."
         }
-      },
-      "persona": {
-        "title": "Persona",
-        "description": "La persona controla por completo el idioma y el estilo del guion hablado."
       }
     },
     "error": {

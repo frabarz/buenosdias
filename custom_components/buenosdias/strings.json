@@ -79,19 +79,19 @@
         "title": "Buenos Días options",
         "description": "Choose which part of the configuration to edit. The LLM connection is edited through the Reconfigure step in the integration overview.",
         "menu_options": {
-          "llm": "LLM",
+          "llm": "Script and voice",
           "tts": "TTS and player",
           "sources": "Sources",
           "rss_feeds": "RSS feeds",
-          "schedule": "Schedule",
-          "persona": "Persona"
+          "schedule": "Schedule"
         }
       },
       "llm": {
-        "title": "LLM options",
-        "description": "Max output length of the generated script. The connection settings are edited through Reconfigure.",
+        "title": "Script and voice",
+        "description": "The length limit of the generated script and the persona that controls its language and style. The connection settings are edited through Reconfigure.",
         "data": {
-          "max_chars": "Maximum script length (characters)"
+          "max_chars": "Maximum script length (characters)",
+          "persona": "Persona"
         }
       },
       "tts": {
@@ -179,10 +179,6 @@
           "feriados": "Dates on which the alarm is skipped, one ISO date (YYYY-MM-DD) per line.",
           "holiday_calendar": "Optional calendar entity (e.g. from the Home Assistant Holiday integration) whose all-day events count as holidays and skip the alarm. Leave empty to only use the manual dates above."
         }
-      },
-      "persona": {
-        "title": "Persona",
-        "description": "The persona fully controls the language and style of the spoken script."
       }
     },
     "error": {
