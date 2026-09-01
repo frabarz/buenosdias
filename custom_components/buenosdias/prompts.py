@@ -35,3 +35,28 @@ def build_user_prompt(context: dict) -> str:
         f"{json.dumps(context, ensure_ascii=False, indent=2)}\n\n"
         "Write the good-morning script."
     )
+
+
+def build_condense_prompt(context: dict, previous_text: str, max_chars: int) -> str:
+    """Build a retry prompt asking the LLM to recompose an over-long script."""
+    return (
+        "You keep writing the spoken good-morning script for the morning radio show.\n"
+        "The script you just wrote is too long to be spoken comfortably, so "
+        "rewrite it more concisely while keeping it natural to read aloud.\n\n"
+        f"Limit: your script MUST be at most {max_chars} characters (the current "
+        f"draft is {len(previous_text)} characters).\n"
+        "Cover the same context sections but more briefly, keeping the greeting "
+        "and a natural spoken flow. Do not invent facts that are not in the context.\n"
+        "Rules:\n"
+        "- Respect the original language of the script.\n"
+        "- Respond only with the spoken text: no markdown, no tags, no headings "
+        "or lists.\n"
+        f"- Do not exceed {max_chars} characters.\n"
+        "- If space is tight you may drop some news items; keep the important or "
+        "the positive ones, so the listener starts their day with relevant info and "
+        "in a good mood.\n\n"
+        "Context available (JSON):\n"
+        f"{json.dumps(context, ensure_ascii=False, indent=2)}\n\n"
+        "Current draft to condense (do not repeat it verbatim):\n"
+        f"{previous_text}\n"
+    )

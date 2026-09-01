@@ -21,6 +21,18 @@ MARKDOWN_BLOCK_RE = re.compile(
 )
 
 
+class ScriptTooLongError(ValueError):
+    """The generated script exceeded the configured character limit."""
+
+    def __init__(self, text: str, max_chars: int) -> None:
+        """Record the offending text and the limit that was exceeded."""
+        self.text = text
+        self.length = len(text)
+        self.max_chars = max_chars
+        msg = f"script too long ({self.length} > {max_chars})"
+        super().__init__(msg)
+
+
 def validate_script(text: str, max_chars: int) -> str:
     """Validate and normalize the generated script."""
     text = (text or "").strip()
@@ -28,8 +40,7 @@ def validate_script(text: str, max_chars: int) -> str:
         msg = "empty script"
         raise ValueError(msg)
     if len(text) > max_chars:
-        msg = f"script too long ({len(text)} > {max_chars})"
-        raise ValueError(msg)
+        raise ScriptTooLongError(text, max_chars)
     if MARKDOWN_BLOCK_RE.search(text):
         msg = "script contains markdown blocks"
         raise ValueError(msg)
@@ -42,7 +53,7 @@ async def async_generate_script(
     context: dict,
     llm: LLMClient | None = None,
 ) -> str:
-    """Generate the good-morning script with a single retry."""
+    """Generate the good-morning script, retrying with a condense prompt."""
     llm_cfg = config.get(CONF_LLM, {})
     max_chars = llm_cfg.get(CONF_MAX_CHARS, DEFAULT_MAX_CHARS)
     client = llm or build_llm(hass, config)
@@ -56,8 +67,19 @@ async def async_generate_script(
                 await client.async_complete(system, user),
                 max_chars,
             )
+        except ScriptTooLongError as err:
+            last_error = err
+            _LOGGER.warning(
+                "Script generation attempt %s too long (%s > %s), asking to "
+                "recompose it more concisely",
+                attempt,
+                err.length,
+                err.max_chars,
+            )
+            user = prompts.build_condense_prompt(context, err.text, err.max_chars)
         except (LLMError, ValueError) as err:
             last_error = err
             _LOGGER.warning("Script generation attempt %s failed: %s", attempt, err)
+            user = prompts.build_user_prompt(context)
     msg = f"script generation failed: {last_error}"
     raise LLMError(msg)

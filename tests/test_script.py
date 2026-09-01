@@ -36,6 +36,15 @@ def test_validate_script_too_long():
         script.validate_script("a" * 100, max_chars=50)
 
 
+def test_validate_script_too_long_error_carries_text():
+    with pytest.raises(script.ScriptTooLongError) as excinfo:
+        script.validate_script("a" * 100, max_chars=50)
+    assert excinfo.value.length == 100
+    assert excinfo.value.max_chars == 50
+    assert excinfo.value.text == "a" * 100
+    assert excinfo.type is script.ScriptTooLongError
+
+
 @pytest.mark.parametrize(
     "bad",
     ["```code```", "# Title", "**bold**", "__italic__", "- list"],
@@ -64,6 +73,39 @@ def test_async_generate_script_applies_max_chars():
     config = {script.CONF_LLM: {script.CONF_MAX_CHARS: 100}}
     with pytest.raises(LLMError):
         _run(script.async_generate_script(None, config, {}, llm=llm))
+
+
+class _RecordingLLM(LLMClient):
+    def __init__(self, results):
+        self.results = list(results)
+        self.calls = 0
+        self.requests = []
+
+    async def async_complete(self, system, user):
+        self.calls += 1
+        self.requests.append((system, user))
+        return self.results[min(self.calls - 1, len(self.results) - 1)]
+
+
+def test_async_generate_script_retries_with_condense_prompt():
+    llm = _RecordingLLM([("a" * 100), "Good morning, refined."])
+    config = {script.CONF_LLM: {script.CONF_MAX_CHARS: 50}}
+    out = _run(script.async_generate_script(None, config, {"weather": {}}, llm=llm))
+    assert out == "Good morning, refined."
+    assert llm.calls == 2
+    first_user, second_user = (u for _, u in llm.requests)
+    assert "Write the good-morning script." in first_user
+    assert "MUST be at most 50 characters" in second_user
+    assert "a" * 100 in second_user
+
+
+def test_async_generate_script_exhausts_on_repeated_overflow():
+    llm = _RecordingLLM(["a" * 100, "a" * 100])
+    config = {script.CONF_LLM: {script.CONF_MAX_CHARS: 50}}
+    with pytest.raises(LLMError):
+        _run(script.async_generate_script(None, config, {}, llm=llm))
+    assert llm.calls == script.MAX_ATTEMPTS
+    assert "MUST be at most 50 characters" in llm.requests[1][1]
 
 
 def test_build_user_prompt_serializes_context():
