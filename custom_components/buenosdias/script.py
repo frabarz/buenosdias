@@ -1,4 +1,10 @@
-"""Generation and validation of the good-morning script."""
+"""Generation and validation of the good-morning script.
+
+:func:`validate_script` enforces: non-empty, ``≤ max_chars`` (default 2000),
+no markdown (fenced blocks, headings, bold, lists). :func:`async_generate_script`
+calls the LLM once and, if the result is too long, retries once with
+:func:`prompts.build_condense_prompt` asking for a more concise recomposition.
+"""
 
 from __future__ import annotations
 

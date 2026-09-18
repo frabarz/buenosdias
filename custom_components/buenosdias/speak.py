@@ -1,4 +1,10 @@
-"""Playback of the script via TTS on the configured media_player."""
+"""Playback of the script via TTS on the configured media_player.
+
+:func:`async_speak` ensures the ``media_player`` is on (if it advertises
+``TURN_ON``), sets ``volume_level``, calls ``tts.speak`` with
+``blocking=True``, and restores the previous volume when
+``restore_volume`` is enabled.
+"""
 
 from __future__ import annotations
 

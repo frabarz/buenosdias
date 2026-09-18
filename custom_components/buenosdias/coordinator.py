@@ -1,4 +1,10 @@
-"""Orchestration of the full good-morning pipeline."""
+"""Orchestration of the full good-morning pipeline.
+
+:func:`async_run` runs Context → Script → TTS. With ``emit=False`` it
+dry-runs (generates the script without playing audio). Used by the
+``buenosdias.generate``/``buenosdias.emit`` services and the daily alarm in
+:mod:`__init__`.
+"""
 
 from __future__ import annotations
 

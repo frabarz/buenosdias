@@ -1,4 +1,21 @@
-"""Daily alarm scheduling and skip logic."""
+"""Daily alarm scheduling and skip logic.
+
+Handles the daily trigger, skip rules (``skip_days``, ``feriados``, optional
+holiday calendar, ``skip_if_emitted``), ``time_entity`` vs static ``time``,
+and next-alarm computation.
+
+- :func:`read_alarm_time` — resolves ``(hour, minute)`` from ``time_entity``
+  (if set, parsed via :func:`parse_time`) or the static ``time`` (default
+  07:00). Returns ``None`` if the entity is unavailable/unparseable.
+- :func:`async_holiday_dates` — merges manual ``feriados`` with events from
+  the configured holiday calendar (``calendar.async_get_events``) over the
+  next 60 days.
+- :func:`should_fire` / :func:`next_fire_time` — evaluate skip rules and
+  compute the next ISO-8601 UTC fire time.
+- :func:`async_setup_scheduler` — registers ``async_track_time_change`` and,
+  when ``time_entity`` is used, re-arms on state changes via
+  ``async_track_state_change_event``.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,35 @@
-"""buenosdias integration: personalized morning radio with LLM."""
+"""Buenos Días — personalized morning radio for Home Assistant.
+
+Pipeline: Context → Script → Playback → Alarm.
+
+1. **Context** — :mod:`sources` collects ``hass.states`` (weather, calendar,
+   sensor) and :mod:`rss` merges configured feeds (news/events).
+2. **Script** — :mod:`llm` provides ``HAConversationLLM`` (via
+   ``conversation.async_converse(..., extra_system_prompt=...)`` — requires
+   HA ≥ 2025.2) and ``OpenAICompatLLM`` (``/chat/completions``), wrapped by
+   ``FallbackLLM``; :mod:`prompts` and :mod:`script` build and validate the
+   spoken text (non-empty, ≤ max_chars, no markdown, single retry).
+3. **Playback** — :mod:`speak` powers on the ``media_player``, sets volume and
+   calls ``tts.speak`` (blocking).
+4. **Alarm** — :mod:`scheduler` handles the daily trigger, skip rules
+   (``skip_days``, ``feriados``, holiday calendar, ``skip_if_emitted``) and
+   ``time_entity``; :mod:`state` persists ``last_emission_date``,
+   ``last_result``, ``next_alarm`` and ``last_script`` via
+   ``homeassistant.helpers.storage.Store``; :mod:`switch`/:mod:`sensor` expose
+   the enable switch and status sensors.
+
+Configuration comes from UI config entries — :mod:`config_flow` implements the
+multi-step LLM connection (probed via ``GET /models``) plus the options menu
+(TTS, sources, RSS feeds, schedule, persona), reauth and reconfigure flows;
+:mod:`config_utils` merges ``entry.data`` (credentials win) with
+``entry.options`` via :mod:`config_schema`. Legacy YAML is still imported once
+at startup (``async_setup`` → ``async_step_import``) then should be removed.
+
+Services: ``buenosdias.context``, ``buenosdias.generate``, ``buenosdias.emit``.
+Entities (under the "Buenos Días" device): ``switch.buenos_dias_enabled``,
+``sensor.buenos_dias_last_status`` (``last_script`` attribute),
+``sensor.buenos_dias_next_alarm``.
+"""
 
 from __future__ import annotations
 

@@ -1,3 +1,7 @@
+# flake.nix — NixOS overlay + devShell + checks.
+# Layout: custom_components/buenosdias is the HA integration, tests/ is the
+# pytest suite, nixos/overlay.nix builds it via buildHomeAssistantComponent,
+# config.example.yaml is the deprecated YAML import reference.
 {
   description = "buenosdias: a personalized morning radio for Home Assistant with LLM";
 

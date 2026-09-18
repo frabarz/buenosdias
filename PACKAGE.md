@@ -1,109 +1,106 @@
-# Buenos Días — Quick Guide
+# Buenos Días
 
-A personalized morning radio for Home Assistant: context + LLM + TTS as a
-spoken alarm, with no external services.
+Buenos Días is a morning radio that lives in Home Assistant. At your alarm time it gathers what matters for today, asks an LLM to turn it into a short spoken script, and plays it on your speakers. No extra server, no cloud dependency.
 
-## Quick Start
+## What it does for you
 
-1. Copy `custom_components/buenosdias/` to your `custom_components/` (or use
-   the NixOS flake below) and restart HA.
-2. **Settings → Devices & Services → Add Integration → "Buenos Días"**, fill
-   in the LLM connection, then use the Options menu to tune the rest.
-3. From Developer Tools → Services try:
+- You wake to a briefing that fits your day, not a generic beep.
+- You can keep the conversation agent you already use in HA, or point it at any OpenAI compatible endpoint such as Ollama, OpenRouter, Groq or LM Studio.
+- You choose the sources. Pick weather, calendar and sensor entities, and add RSS feeds for news and events. The integration filters by age, caps items, drops duplicates and skips entries that match your exclude keywords. Exclude ignores accents, so `futbol` matches `fútbol`.
+- You control the schedule. Use a fixed time such as `07:00` or point `time_entity` at a sensor that holds your phone alarm. Skip weekends, specific `feriados` dates, a holiday calendar, and tell it not to repeat if it already fired today.
+- You set the persona. Write the prompt in the language and tone you want to hear. Spanish, English, terse, warm, funny, it follows you.
+- TTS behaves. It wakes the player, sets the volume, plays, then puts the volume back if you want.
 
-   - `buenosdias.generate` — generates the script (dry-run).
-   - `buenosdias.emit` — gathers context, generates and plays it over the
-     speaker.
+## You need
 
-> **Migrating from YAML?** YAML configuration is deprecated. A legacy
-> `buenosdias:` block in `configuration.yaml` only triggers a one-time import
-> into a config entry at startup. Keep it, restart HA, confirm the import
-> dialog, then remove the block and finish the setup in the UI.
+- Home Assistant 2025.2 or newer
+- An LLM, either a conversation agent set up in HA, or an OpenAI compatible endpoint that serves `/chat/completions`
+- A TTS engine such as Piper and a media player with a speaker
 
-## Requirements
+## Install
 
-- Home Assistant **≥ 2025.2**
-- A **conversation agent** configured (e.g. `conversation.assist`) or an
-  OpenAI-compatible endpoint (`/chat/completions`).
-- A **TTS engine** and a **media_player** (e.g. Piper + speaker).
+### HACS
 
-## Installation
+In HACS go to Integrations, open the menu, add `https://github.com/frabarz/buenosdias` as a custom repository (type Integration), install, restart Home Assistant.
 
-### Manual (HACS / custom_components)
+### Manual
 
-```sh
-git clone https://github.com/frabarz/buenosdias buenosdias
-cp -r buenosdias/custom_components/buenosdias <hass_config>/custom_components/
-```
+Copy `custom_components/buenosdias` into `<config>/custom_components` and restart.
 
-### NixOS (flake)
+### NixOS
+
+The flake exposes `home-assistant-custom-components.buenosdias`:
 
 ```nix
 {
   inputs.buenosdias.url = "github:frabarz/buenosdias";
-  outputs = { self, nixpkgs, buenosdias, ... }:
-    let system = "x86_64-linux"; in {
-      nixosConfigurations.my = nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          buenosdias.nixosModules.default
-          { services.home-assistant.customComponents = [ buenosdias.packages.${system}.default ]; }
-        ];
-      };
+  outputs = { self, nixpkgs, buenosdias, ... }: {
+    nixosConfigurations.my = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        buenosdias.nixosModules.default
+        { services.home-assistant.customComponents = [ buenosdias.packages.x86_64-linux.default ]; }
+      ];
     };
+  };
 }
 ```
 
+## First run
+
+1. Open Settings, Devices & Services, Add Integration, pick Buenos Días. Choose how it will talk to the LLM. The form checks the endpoint with `GET /models` before it saves. HA stores the API key in the config entry and never shows it again.
+2. Open Configure to finish setup. You will find LLM, TTS, Sources, RSS feeds and Schedule. Persona lives inside LLM. Work through them in order.
+3. Try it without waiting for morning. Open Developer Tools, Services, run `buenosdias.generate` to preview the text, then `buenosdias.emit` to hear it.
+
 ## Configuration
 
-Setup is done through the **UI config flow**, in two parts:
+All of it lives in the UI. No YAML needed.
 
-1. **LLM connection** (config flow): choose a Home Assistant conversation
-   agent, or an OpenAI-compatible endpoint (base URL, model, API key). The
-   endpoint is validated with a live probe before it is saved. The API key is
-   stored in the entry `data` and is never logged or exposed again.
-2. **Options menu** (Config Flow → Options), section by section:
+LLM connection happens during setup. You can change it later with Reconfigure. Two choices:
 
-- **LLM** — maximum script length (`max_chars`, 100–20000).
-- **TTS** — TTS engine, media player, language, volume, restore volume.
-- **Sources** — weather, calendar and sensor entities.
-- **RSS feeds** — add/edit/remove feeds inline; per feed set kind
-  (news/events), `max_age_hours`, `max_items`, `tags` and `exclude`
-  keywords.
-- **Schedule** — alarm time (or a `time_entity` to read it dynamically,
-  HH:MM or HH:MM:SS accepted), skip days, `feriados`, an optional holiday
-  calendar and `skip_if_emitted`.
-- **Persona** — free-text prompt controlling the script's language and style.
+- Home Assistant conversation agent. Pick an agent entity. This is the easiest path if you already use Assist with Ollama or OpenAI in HA.
+- OpenAI compatible endpoint. Set `base_url`, `model` and `api_key`. If HA later rejects the key, Buenos Días opens a reauthentication dialog on its own. If you do not run a local model, OpenRouter has free models that work well here. The integration makes one call each morning, two at most if the first draft runs long and needs a retry, so a free tier stretches far.
 
-To change the LLM connection later, use the integration's **Reconfigure
-entry** menu; if the stored API key is rejected, a reauthentication dialog is
-started automatically. The full equivalent of the old YAML block is shown in
-[config.example.yaml](config.example.yaml) purely as an import/migration
-reference.
+The rest lives under Configure:
 
-## Language
+- LLM. Set `max_chars` to cap the spoken text, 100 to 20000, default 2000. If the script runs long, the integration asks the model to shorten it once. Persona also lives here as free text that controls language and style.
+- TTS. Choose the TTS entity and media player, language such as `es-ES`, volume from 0 to 1, and whether to restore volume after playback.
+- Sources. Pick which weather, calendar and sensor entities to include each morning.
+- RSS feeds. Add, edit or remove feeds inline. For each feed you set `kind` (news or events), `max_age_hours`, `max_items`, `tags` as free labels, and `exclude` keywords to skip.
+- Schedule. Set a fixed `time` (`07:00` or `HH:MM:SS`) or a `time_entity` that the integration follows and re-arms when it changes. Add `skip_days` (mon to sun), `feriados` as fixed `YYYY-MM-DD` dates, an optional holiday calendar entity, and `skip_if_emitted` to avoid a second firing on the same day.
 
-The script is written in whatever language and style your **persona** defines.
-Set the persona in the integration **Options → Persona** to control it, e.g. a
-Spanish persona produces a Spanish morning show:
+### Persona examples
 
-> Eres el locutor de una radio matutina. Habla en español de España, con tono
-> cercano y natural. Redacta un breve guion hablado.
+Spanish morning show:
 
-## Services
+> Eres el locutor de una radio matutina. Habla en español de España, con tono cercano y natural. Puedes incluir un toque de humor pero sé informativo.
 
-| Service | Description |
-| --- | --- |
-| `buenosdias.context` | Collected context (weather, calendar, sensors, RSS) as JSON. |
-| `buenosdias.generate` | Generates the script with the LLM (dry-run), returns the text. |
-| `buenosdias.emit` | Full pipeline: context → script → TTS on the media_player. |
+English, concise:
 
-## Entities
+> You are a friendly morning radio host. Speak in clear, warm English. Keep it brief and upbeat. Highlight what matters today.
 
-| Entity | Description |
-| --- | --- |
-| `switch.buenos_dias_enabled` | Pauses/resumes the daily alarm. |
-| `sensor.buenos_dias_last_status` | Result of the last playback (`ok` / error) and date. The full last script is in its `last_script` attribute. |
-| `sensor.buenos_dias_next_alarm` | Next alarm time (ISO-8601). |
+## Using it
 
-All entities are grouped under the "Buenos Días" device.
+You can let the daily alarm run it, or call it yourself.
+
+- `buenosdias.context` shows the JSON the LLM will see.
+- `buenosdias.generate` writes the script without playing it. Good for tuning the persona.
+- `buenosdias.emit` does the full run, context to script to speaker.
+
+Call `emit` from an automation, a dashboard button, or Developer Tools.
+
+Entities sit under the Buenos Días device:
+
+- `switch.buenos_dias_enabled` pauses or resumes the daily alarm.
+- `sensor.buenos_dias_last_status` holds `ok` or an error from the last run. The full last script is in its `last_script` attribute, so you can read it with `{{ state_attr('sensor.buenos_dias_last_status','last_script') }}`.
+- `sensor.buenos_dias_next_alarm` shows when the next alarm will fire, in UTC, or `not_scheduled`.
+
+Tip: point `time_entity` at `sensor.your_phone_next_alarm` if your phone exposes it. The integration tracks that sensor and re-registers the alarm when it changes.
+
+## Migrating from YAML
+
+YAML with `buenosdias:` in `configuration.yaml` is deprecated. It now does a one-time import into a config entry at startup. If you have it, keep the block, restart, confirm the import dialog, then remove the block and finish tuning in the UI. New installs should skip YAML and use the UI from the start. See `config.example.yaml` for the old structure.
+
+## Need help
+
+Open an issue at [github.com/frabarz/buenosdias/issues](https://github.com/frabarz/buenosdias/issues). For development details see the [README](README.md).

@@ -1,4 +1,12 @@
-"""Shared helpers for the buenosdias tests."""
+"""Shared helpers for the buenosdias tests.
+
+The suite uses two harnesses: a lightweight ``fake_hass`` (``FakeState``,
+``FakeStore``, ``FakeEntry``) for unit-level tests, and the real ``hass``
+fixture from ``pytest-homeassistant-custom-component`` for end-to-end config
+flow tests (requires ``--asyncio-mode=auto``). ``nix develop`` provides a
+reproducible shell with Python 3.14 + HA; alternatively ``uv venv`` with
+``homeassistant>=2025.2`` works.
+"""
 
 from pathlib import Path
 from types import SimpleNamespace

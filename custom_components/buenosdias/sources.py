@@ -1,4 +1,11 @@
-"""Context collection from Home Assistant state and RSS feeds."""
+"""Context collection from Home Assistant state and RSS feeds.
+
+``gather_ha_entities`` serialises requested ``weather``/``calendar``/``sensor``
+entities via :func:`entity_brief` (state + attributes + last_updated).
+``async_gather_context`` merges those with :func:`rss.async_fetch_feeds`
+(news/events) and a timestamp — the dict consumed by :mod:`prompts` and the
+LLM.
+"""
 
 from __future__ import annotations
 

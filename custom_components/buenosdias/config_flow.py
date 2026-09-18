@@ -1,4 +1,20 @@
-"""Config flow for the buenosdias integration."""
+"""Config flow for the buenosdias integration.
+
+Multi-step UI setup: LLM connection (probed via ``GET /models``) plus the
+options menu (TTS, sources, RSS feeds, schedule, persona). Also implements
+reauth (when the stored API key is rejected) and reconfigure flows, and the
+one-time YAML import (``async_step_import``).
+
+LLM connection — ``async_step_user`` branches to ``user_agent`` (HA
+conversation agent) or ``user_openai`` (OpenAI-compatible base URL + model +
+API key, validated live via :func:`_async_validate_connection`). The API key
+stays in ``entry.data`` and never appears in options.
+
+Options — ``BuenosdiasOptionsFlowHandler`` (``async_step_init`` → ``llm``,
+``tts``, ``sources``, ``rss_feeds``, ``schedule``) edits behavioral settings
+only; RSS feeds are managed inline (add/edit/remove) with per-feed
+``kind``/``max_age_hours``/``max_items``/``tags``/``exclude``.
+"""
 
 from __future__ import annotations
 

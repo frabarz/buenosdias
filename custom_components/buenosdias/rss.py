@@ -1,4 +1,11 @@
-"""Context collection from RSS feeds (news and events)."""
+"""Context collection from RSS feeds (news and events).
+
+Fetches/parses/filters/dedupes feeds via ``feedparser`` and the shared HA
+``httpx`` client. :func:`parse_feed_content` enforces ``max_age_hours``,
+``max_items``, tag/exclude filtering (accent-insensitive) and title
+normalisation for dedup; :func:`async_fetch_feeds` runs all feeds
+concurrently and logs failures without aborting the rest.
+"""
 
 from __future__ import annotations
 

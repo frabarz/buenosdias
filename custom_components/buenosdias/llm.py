@@ -1,4 +1,13 @@
-"""LLM clients: HA conversation agent and OpenAI-compatible endpoints."""
+"""LLM clients: HA conversation agent and OpenAI-compatible endpoints.
+
+- ``HAConversationLLM`` — calls ``conversation.async_converse`` with
+  ``extra_system_prompt`` (requires HA ≥ 2025.2); connection is configured
+  via the HA conversation agent picker.
+- ``OpenAICompatLLM`` — posts to ``/chat/completions`` on any OpenAI-compatible
+  endpoint (validated in the config flow via ``GET /models``).
+- ``FallbackLLM`` — tries the primary and delegates to the fallback on failure.
+- :func:`build_llm` — builds the pair and selects primary by ``mode``.
+"""
 
 from __future__ import annotations
 
