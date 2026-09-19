@@ -171,20 +171,23 @@
           "skip_days": "Skip weekdays",
           "feriados": "Holidays (one per line)",
           "holiday_calendar": "Holiday calendar",
-          "skip_if_emitted": "Skip if already emitted"
+          "skip_if_emitted": "Skip if already emitted",
+          "preload_minutes": "Preload minutes before alarm"
         },
         "data_description": {
           "time": "Fixed alarm time (HH:MM). Seconds, if any, are ignored. Leave empty when a time entity is set.",
           "time_entity": "Optional sensor that provides the alarm time dynamically, e.g. your phone's alarm sensor. Overrides the fixed time.",
           "feriados": "Dates on which the alarm is skipped, one ISO date (YYYY-MM-DD) per line.",
-          "holiday_calendar": "Optional calendar entity (e.g. from the Home Assistant Holiday integration) whose all-day events count as holidays and skip the alarm. Leave empty to only use the manual dates above."
+          "holiday_calendar": "Optional calendar entity (e.g. from the Home Assistant Holiday integration) whose all-day events count as holidays and skip the alarm. Leave empty to only use the manual dates above.",
+          "preload_minutes": "Generate the script and warm the TTS cache this many minutes before the alarm (0 = disabled). The cached voice plays instantly at alarm time. Recommended: 2 or 3."
         }
       }
     },
     "error": {
       "invalid_feed_url": "The feed URL is not valid.",
       "invalid_date": "Please enter one ISO date (YYYY-MM-DD) per line.",
-      "invalid_feed_index": "The selected feed no longer exists."
+      "invalid_feed_index": "The selected feed no longer exists.",
+      "invalid_preload": "Preload must be between 0 and 60 minutes."
     }
   },
   "selector": {

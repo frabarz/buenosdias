@@ -7,9 +7,9 @@ Buenos Días is a morning radio that lives in Home Assistant. At your alarm time
 - You wake to a briefing that fits your day, not a generic beep.
 - You can keep the conversation agent you already use in HA, or point it at any OpenAI compatible endpoint such as Ollama, OpenRouter, Groq or LM Studio.
 - You choose the sources. Pick weather, calendar and sensor entities, and add RSS feeds for news and events. The integration filters by age, caps items, drops duplicates and skips entries that match your exclude keywords. Exclude ignores accents, so `futbol` matches `fútbol`.
-- You control the schedule. Use a fixed time such as `07:00` or point `time_entity` at a sensor that holds your phone alarm. Skip weekends, specific `feriados` dates, a holiday calendar, and tell it not to repeat if it already fired today.
+- You control the schedule. Use a fixed time such as `07:00` or point `time_entity` at a sensor that holds your phone alarm. Skip weekends, specific `feriados` dates, a holiday calendar, and tell it not to repeat if it already fired today. Set `preload_minutes` (0-60, default 0, recommended 2-3) to generate the script and warm the TTS cache a few minutes early so the alarm plays instantly with no synthesis pause.
 - You set the persona. Write the prompt in the language and tone you want to hear. Spanish, English, terse, warm, funny, it follows you.
-- TTS behaves. It wakes the player, sets the volume, plays, then puts the volume back if you want.
+- TTS behaves. It wakes the player, sets the volume, plays, then puts the volume back if you want. With `preload_minutes` it warms the cache silently before the alarm so `tts.speak` is a hit.
 
 ## You need
 
@@ -67,7 +67,7 @@ The rest lives under Configure:
 - TTS. Choose the TTS entity and media player, language such as `es-ES`, volume from 0 to 1, and whether to restore volume after playback.
 - Sources. Pick which weather, calendar and sensor entities to include each morning.
 - RSS feeds. Add, edit or remove feeds inline. For each feed you set `kind` (news or events), `max_age_hours`, `max_items`, `tags` as free labels, and `exclude` keywords to skip.
-- Schedule. Set a fixed `time` (`07:00` or `HH:MM:SS`) or a `time_entity` that the integration follows and re-arms when it changes. Add `skip_days` (mon to sun), `feriados` as fixed `YYYY-MM-DD` dates, an optional holiday calendar entity, and `skip_if_emitted` to avoid a second firing on the same day.
+- Schedule. Set a fixed `time` (`07:00` or `HH:MM:SS`) or a `time_entity` that the integration follows and re-arms when it changes. Add `skip_days` (mon to sun), `feriados` as fixed `YYYY-MM-DD` dates, an optional holiday calendar entity, `skip_if_emitted` to avoid a second firing on the same day, and `preload_minutes` (0-60, default 0, recommended 2-3) to generate the script early and warm the TTS cache. The preload respects `skip_days`/holidays and midnight wrap (e.g. `00:01` with `3` → `23:58` previous day); at alarm time the cached voice plays instantly.
 
 ### Persona examples
 

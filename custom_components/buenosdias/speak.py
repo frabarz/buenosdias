@@ -4,6 +4,15 @@
 ``TURN_ON``), sets ``volume_level``, calls ``tts.speak`` with
 ``blocking=True``, and restores the previous volume when
 ``restore_volume`` is enabled.
+
+:func:`async_preload` warms the Home Assistant TTS file + memory cache
+silently (no ``media_player`` playback) so the subsequent
+``tts.speak`` at alarm time is a cache hit. It mirrors the
+``POST /api/tts_get_url`` path: ``SpeechManager.async_cache_message_in_memory``
+(``homeassistant/components/tts/__init__.py:939``) which hashes
+``sha1(message)+language+options+engine`` and populates
+``mem_cache``/``file_cache`` via the ``/api/tts_proxy/{token}`` streaming
+path.
 """
 
 from __future__ import annotations
@@ -108,3 +117,85 @@ async def async_speak(hass: HomeAssistant, config: dict, text: str) -> None:
             "volume_set",
             {"entity_id": media_player, "volume_level": previous_volume},
         )
+
+
+async def async_preload(hass: HomeAssistant, config: dict, text: str) -> None:
+    """Warm the TTS cache for *text* without audible playback.
+
+    Uses ``SpeechManager.async_cache_message_in_memory`` when available
+    (the path behind ``POST /api/tts_get_url``). This hashes the message
+    + language + options + engine and populates both the in-memory and
+    file caches so the later ``async_speak`` (which goes through
+    ``generate_media_source_id`` / ``/api/tts_proxy/{token}``) is instant.
+
+    Falls back to creating a ``ResultStream`` and calling
+    ``async_set_message`` when the manager helper is not available.
+    Never raises - preload failures are logged at debug and ignored.
+    """
+    if not text or not text.strip():
+        return
+    tts_cfg = config.get(CONF_TTS, {})
+    tts_entity = tts_cfg.get(CONF_ENTITY_ID)
+    if not tts_entity:
+        _LOGGER.debug("preload skipped: no tts.entity_id configured")
+        return
+    language = tts_cfg.get(CONF_LANGUAGE, DEFAULT_LANGUAGE)
+    # Try the direct manager cache path (silent, no media_player).
+    try:
+        from homeassistant.components.tts.const import DATA_TTS_MANAGER
+
+        manager = hass.data.get(DATA_TTS_MANAGER) if hasattr(hass, "data") else None
+        if manager is not None:
+            try:
+                from homeassistant.components.tts.helper import get_engine_instance
+            except ImportError:
+                get_engine_instance = None  # type: ignore[assignment]
+            engine_instance = None
+            if get_engine_instance is not None:
+                try:
+                    engine_instance = get_engine_instance(hass, tts_entity)
+                except Exception:
+                    engine_instance = None
+            if engine_instance is not None:
+                try:
+                    # Validate/normalize language+options like HA does for speak.
+                    lang, options = manager.process_options(
+                        engine_instance, language, {}
+                    )
+                    manager.async_cache_message_in_memory(
+                        engine=tts_entity,
+                        message=text,
+                        use_file_cache=True,
+                        language=lang,
+                        options=options,
+                    )
+                    _LOGGER.debug(
+                        "TTs cache warmed via SpeechManager for %s (%s chars)",
+                        tts_entity,
+                        len(text),
+                    )
+                    return
+                except Exception as err:
+                    _LOGGER.debug("SpeechManager preload failed, falling back: %s", err)
+            # Fallback via ResultStream (mirrors POST /api/tts_get_url)
+            try:
+                stream = manager.async_create_result_stream(
+                    engine=tts_entity,
+                    use_file_cache=True,
+                    language=language,
+                    options={},
+                )
+                stream.async_set_message(text)
+                _LOGGER.debug(
+                    "TTs cache warmed via ResultStream for %s (%s chars)",
+                    tts_entity,
+                    len(text),
+                )
+                return
+            except Exception as err:
+                _LOGGER.debug("ResultStream preload failed: %s", err)
+    except Exception as err:
+        _LOGGER.debug("preload manager unavailable: %s", err)
+
+    # Last resort: no manager (unit tests / early startup) - nothing to warm.
+    _LOGGER.debug("preload: no TTS manager, skipping silent warm for %s", tts_entity)

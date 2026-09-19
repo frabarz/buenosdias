@@ -171,20 +171,23 @@
           "skip_days": "Ausgelassene Wochentage",
           "feriados": "Feiertage (einer pro Zeile)",
           "holiday_calendar": "Feiertagskalender",
-          "skip_if_emitted": "Überspringen, falls bereits abgespielt"
+          "skip_if_emitted": "Überspringen, falls bereits abgespielt",
+          "preload_minutes": "Vorlade-Minuten vor dem Wecker"
         },
         "data_description": {
           "time": "Feste Weckzeit (HH:MM). Sekunden werden ignoriert. Leer lassen, wenn eine Zeit-Entität gesetzt ist.",
           "time_entity": "Optionaler Sensor, der die Weckzeit dynamisch liefert, z. B. der Alarmsensor des Telefons. Überschreibt die feste Zeit.",
           "feriados": "Daten, an denen der Alarm ausgelassen wird, ein ISO-Datum (JJJJ-MM-TT) pro Zeile.",
-          "holiday_calendar": "Optionale Kalender-Entität (z. B. aus der Holiday-Integration von Home Assistant), deren ganztägige Einträge als Feiertage zählen und den Alarm auslassen. Leer lassen, um nur die manuellen Daten oben zu verwenden."
+          "holiday_calendar": "Optionale Kalender-Entität (z. B. aus der Holiday-Integration von Home Assistant), deren ganztägige Einträge als Feiertage zählen und den Alarm auslassen. Leer lassen, um nur die manuellen Daten oben zu verwenden.",
+          "preload_minutes": "Generiert das Skript und wärmt den TTS-Cache diese Anzahl Minuten vor dem Wecker auf (0 = deaktiviert). Die gecachte Stimme wird zur Weckzeit sofort abgespielt. Empfohlen: 2 oder 3."
         }
       }
     },
     "error": {
       "invalid_feed_url": "Die Feed-URL ist nicht gültig.",
       "invalid_date": "Bitte geben Sie ein ISO-Datum (JJJJ-MM-TT) pro Zeile ein.",
-      "invalid_feed_index": "Der ausgewählte Feed existiert nicht mehr."
+      "invalid_feed_index": "Der ausgewählte Feed existiert nicht mehr.",
+      "invalid_preload": "Vorladen muss zwischen 0 und 60 Minuten liegen."
     }
   },
   "selector": {

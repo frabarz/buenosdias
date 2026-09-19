@@ -171,20 +171,23 @@
           "skip_days": "Días de la semana a omitir",
           "feriados": "Festivos (uno por línea)",
           "holiday_calendar": "Calendario de festivos",
-          "skip_if_emitted": "Omitir si ya se emitió"
+          "skip_if_emitted": "Omitir si ya se emitió",
+          "preload_minutes": "Minutos de precarga antes de la alarma"
         },
         "data_description": {
           "time": "Hora fija de la alarma (HH:MM). Los segundos, si los hay, se ignoran. Déjela vacía si hay una entidad de hora.",
           "time_entity": "Sensor opcional que proporciona la hora de la alarma de forma dinámica, p. ej. el sensor de alarma de su teléfono. Anula la hora fija.",
           "feriados": "Fechas en las que se omite la alarma, una fecha ISO (AAAA-MM-DD) por línea.",
-          "holiday_calendar": "Entidad de calendario opcional (p. ej. de la integración Holiday de Home Assistant) cuyos eventos de día completo cuentan como festivos y omiten la alarma. Déjela vacía para usar solo las fechas manuales de arriba."
+          "holiday_calendar": "Entidad de calendario opcional (p. ej. de la integración Holiday de Home Assistant) cuyos eventos de día completo cuentan como festivos y omiten la alarma. Déjela vacía para usar solo las fechas manuales de arriba.",
+          "preload_minutes": "Genera el guion y precalienta la caché de TTS este número de minutos antes de la alarma (0 = deshabilitado). La voz en caché se reproduce al instante a la hora de la alarma. Recomendado: 2 o 3."
         }
       }
     },
     "error": {
       "invalid_feed_url": "La URL de la fuente no es válida.",
       "invalid_date": "Introduzca una fecha ISO (AAAA-MM-DD) por línea.",
-      "invalid_feed_index": "La fuente seleccionada ya no existe."
+      "invalid_feed_index": "La fuente seleccionada ya no existe.",
+      "invalid_preload": "La precarga debe estar entre 0 y 60 minutos."
     }
   },
   "selector": {

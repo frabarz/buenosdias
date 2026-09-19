@@ -46,6 +46,7 @@ CONF_SKIP_DAYS = "skip_days"
 CONF_FERIADOS = "feriados"
 CONF_HOLIDAY_CALENDAR = "holiday_calendar"
 CONF_SKIP_IF_EMITTED = "skip_if_emitted"
+CONF_PRELOAD_MINUTES = "preload_minutes"
 
 MODE_HA_CONVERSATION = "ha_conversation"
 MODE_OPENAI_COMPATIBLE = "openai_compatible"

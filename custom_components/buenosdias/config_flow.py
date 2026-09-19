@@ -75,6 +75,7 @@ from .const import (
     CONF_MODEL,
     CONF_OPENAI,
     CONF_PERSONA,
+    CONF_PRELOAD_MINUTES,
     CONF_RESTORE_VOLUME,
     CONF_RSS,
     CONF_SCHEDULE,
@@ -228,6 +229,11 @@ STEP_SCHEDULE_OPTIONS_SCHEMA = vol.Schema(
             EntitySelectorConfig(domain="calendar"),
         ),
         vol.Optional(CONF_SKIP_IF_EMITTED, default=True): BooleanSelector(),
+        vol.Optional(CONF_PRELOAD_MINUTES, default=0): NumberSelector(
+            NumberSelectorConfig(
+                min=0, max=60, step=1, mode=NumberSelectorMode.BOX
+            ),
+        ),
     },
 )
 
@@ -815,18 +821,27 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
             if any(not re.fullmatch(DATE_RE, day) for day in feriados):
                 errors[CONF_FERIADOS] = "invalid_date"
             else:
-                options = self._current_options()
-                options[CONF_SCHEDULE] = {
-                    CONF_TIME: _normalize_time(user_input.get(CONF_TIME)),
-                    CONF_TIME_ENTITY: user_input.get(CONF_TIME_ENTITY) or "",
-                    CONF_SKIP_DAYS: user_input.get(CONF_SKIP_DAYS) or [],
-                    CONF_FERIADOS: feriados,
-                    CONF_HOLIDAY_CALENDAR: user_input.get(CONF_HOLIDAY_CALENDAR) or "",
-                    CONF_SKIP_IF_EMITTED: bool(
-                        user_input.get(CONF_SKIP_IF_EMITTED, True),
-                    ),
-                }
-                return self._replace_options(options)
+                preload_raw = user_input.get(CONF_PRELOAD_MINUTES, 0)
+                try:
+                    preload_minutes = int(preload_raw or 0)
+                except (TypeError, ValueError):
+                    preload_minutes = 0
+                if not 0 <= preload_minutes <= 60:
+                    errors[CONF_PRELOAD_MINUTES] = "invalid_preload"
+                else:
+                    options = self._current_options()
+                    options[CONF_SCHEDULE] = {
+                        CONF_TIME: _normalize_time(user_input.get(CONF_TIME)),
+                        CONF_TIME_ENTITY: user_input.get(CONF_TIME_ENTITY) or "",
+                        CONF_SKIP_DAYS: user_input.get(CONF_SKIP_DAYS) or [],
+                        CONF_FERIADOS: feriados,
+                        CONF_HOLIDAY_CALENDAR: user_input.get(CONF_HOLIDAY_CALENDAR) or "",
+                        CONF_SKIP_IF_EMITTED: bool(
+                            user_input.get(CONF_SKIP_IF_EMITTED, True),
+                        ),
+                        CONF_PRELOAD_MINUTES: preload_minutes,
+                    }
+                    return self._replace_options(options)
 
         schedule = self._current_options().get(CONF_SCHEDULE, {})
         suggested = {
@@ -836,6 +851,7 @@ class BuenosdiasOptionsFlowHandler(OptionsFlowWithConfigEntry):
             CONF_FERIADOS: "\n".join(schedule.get(CONF_FERIADOS, [])),
             CONF_HOLIDAY_CALENDAR: schedule.get(CONF_HOLIDAY_CALENDAR),
             CONF_SKIP_IF_EMITTED: bool(schedule.get(CONF_SKIP_IF_EMITTED, True)),
+            CONF_PRELOAD_MINUTES: int(schedule.get(CONF_PRELOAD_MINUTES, 0) or 0),
         }
         return self.async_show_form(
             step_id="schedule",

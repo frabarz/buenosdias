@@ -36,6 +36,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from datetime import timedelta
+
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.util import dt as dt_util
@@ -139,6 +141,7 @@ async def _async_configure(
         "entities": [],
         "entry": entry,
         "unsub_scheduler": None,
+        "pending_script": None,
     }
 
     async def async_handle_context(call: ServiceCall) -> dict[str, Any]:
@@ -205,6 +208,35 @@ async def _async_configure(
             alarm=scheduler.read_alarm_time(hass, config),
             holiday_dates=holidays,
         )
+        # Prefer the preloaded script (generated 2-3 min early) for instant playback
+        pending = data.get("pending_script")
+        use_pending = (
+            pending is not None
+            and pending.get("target_date") == local_today.isoformat()
+            and pending.get("script")
+        )
+        if use_pending:
+            try:
+                from .speak import async_speak
+
+                await async_speak(hass, config, pending["script"])
+                await _async_record_script(hass, pending["script"])
+                data["pending_script"] = None
+                await store.async_mark_emitted(
+                    local_today.isoformat(),
+                    "ok",
+                    next_alarm=next_alarm,
+                )
+                _refresh_entities(hass)
+                _LOGGER.debug("alarm played from preloaded script for %s", local_today)
+                return
+            except Exception as err:  # pragma: no cover
+                _LOGGER.warning(
+                    "preloaded playback failed, falling back to full pipeline: %s", err
+                )
+                data["pending_script"] = None
+                # fall through to full pipeline after clearing pending
+
         try:
             pipeline = await coordinator.async_run(hass, config)
             result = "ok"
@@ -214,6 +246,9 @@ async def _async_configure(
             result = f"error: {err}"
         else:
             await _async_record_script(hass, pipeline["script"])
+        # Clear any stale pending for today (one-shot)
+        if pending is not None and pending.get("target_date") == local_today.isoformat():
+            data["pending_script"] = None
         await store.async_mark_emitted(
             local_today.isoformat(),
             result,
@@ -221,12 +256,70 @@ async def _async_configure(
         )
         _refresh_entities(hass)
 
+    async def async_on_preload(now) -> None:
+        """Generate the script and warm the TTS cache 2-3 min before alarm."""
+        data = hass.data[DOMAIN]
+        if not data["enabled"]:
+            return
+        offset = scheduler.preload_minutes(config)
+        if offset <= 0:
+            return
+        alarm = scheduler.read_alarm_time(hass, config)
+        preload = scheduler.preload_alarm_time(hass, config)
+        if alarm is None or preload is None:
+            return
+        # Determine which calendar day the *alarm* belongs to for this preload.
+        # When the preload wraps past midnight (e.g. alarm 00:01, preload 23:58)
+        # the target is next day; otherwise same day.
+        local_preload = dt_util.as_local(now)
+        alarm_total = alarm[0] * 60 + alarm[1]
+        preload_total = preload[0] * 60 + preload[1]
+        wraps = preload_total > alarm_total  # offset caused day wrap
+        target_date = local_preload.date()
+        if wraps:
+            target_date = target_date + timedelta(days=1)
+        holidays = await scheduler.async_holiday_dates(hass, config)
+        if not scheduler.should_fire(
+            config,
+            today=target_date,
+            last_emitted_date=store.last_emission_date,
+            holiday_dates=holidays,
+        ):
+            _LOGGER.debug("preload skipped: should_fire false for %s", target_date)
+            return
+        # Don't regenerate if we already have a fresh pending for this target
+        pending = data.get("pending_script")
+        if pending is not None and pending.get("target_date") == target_date.isoformat():
+            _LOGGER.debug("preload skipped: already have pending for %s", target_date)
+            return
+        try:
+            result = await coordinator.async_preload_run(hass, config)
+        except coordinator.PipelineError as err:
+            _LOGGER.warning("preload generation failed for %s: %s", target_date, err)
+            _async_notify_reauth(hass, err)
+            return
+        except Exception as err:  # pragma: no cover
+            _LOGGER.warning("unexpected preload failure: %s", err)
+            return
+        data["pending_script"] = {
+            "script": result["script"],
+            "target_date": target_date.isoformat(),
+        }
+        await _async_record_script(hass, result["script"])
+        _LOGGER.info(
+            "preloaded script for %s (%s chars) %s min before alarm",
+            target_date,
+            len(result["script"]),
+            offset,
+        )
+
     data = hass.data[DOMAIN]
     data["unsub_scheduler"] = scheduler.async_setup_scheduler(
         hass,
         config,
         async_on_alarm,
         on_rearm=lambda: _async_publish_next_alarm(hass, config),
+        preload_callback=async_on_preload,
     )
     data["refresh_next_alarm"] = lambda: _async_publish_next_alarm(hass, config)
 

@@ -31,6 +31,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     CONF_FERIADOS,
     CONF_HOLIDAY_CALENDAR,
+    CONF_PRELOAD_MINUTES,
     CONF_SCHEDULE,
     CONF_SKIP_DAYS,
     CONF_SKIP_IF_EMITTED,
@@ -78,6 +79,34 @@ def parse_time(value: str | datetime) -> tuple[int, int]:
             parsed = dt_util.as_local(parsed)
         hour, minute = parsed.hour, parsed.minute
     return hour, minute
+
+
+def preload_minutes(config: dict) -> int:
+    """Return the configured TTS preload offset in minutes (0 = disabled)."""
+    try:
+        return int(config.get(CONF_SCHEDULE, {}).get(CONF_PRELOAD_MINUTES, 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def preload_alarm_time(
+    hass: HomeAssistant, config: dict
+) -> tuple[int, int] | None:
+    """Return (hour, minute) for the preload trigger, or None.
+
+    The preload time is ``alarm - preload_minutes`` with day wrap handling.
+    Returns None if preload is disabled (0) or the alarm itself is unavailable.
+    """
+    offset = preload_minutes(config)
+    if offset <= 0:
+        return None
+    alarm = read_alarm_time(hass, config)
+    if alarm is None:
+        return None
+    hour, minute = alarm
+    total = hour * 60 + minute - offset
+    total %= 24 * 60
+    return divmod(total, 60)
 
 
 def read_alarm_time(hass: HomeAssistant, config: dict) -> tuple[int, int] | None:
@@ -216,39 +245,62 @@ def async_setup_scheduler(
     config: dict,
     callback: Callable,
     on_rearm: Callable[[], Any] | None = None,
+    preload_callback: Callable | None = None,
 ) -> Callable[[], None]:
     """Register the daily trigger; with time_entity it re-registers on state change.
 
     ``on_rearm`` (if given, a coroutine function) is scheduled as a task after
     each re-registration triggered by a time_entity state change. Returns the
     cancellation function for the scheduler and the state listener.
+
+    When ``preload_minutes`` is configured (>0) and ``preload_callback`` is
+    provided, a second daily ``async_track_time_change`` is registered at
+    ``alarm - preload_minutes`` (with day wrap). Both trackers are re-armed
+    together when ``time_entity`` changes.
     """
     schedule = config.get(CONF_SCHEDULE, {})
     time_entity = schedule.get(CONF_TIME_ENTITY, "")
 
-    def _arm() -> Callable[[], None] | None:
+    def _arm() -> tuple[Callable[[], None] | None, Callable[[], None] | None]:
+        unsub_alarm: Callable[[], None] | None = None
+        unsub_preload: Callable[[], None] | None = None
         alarm = read_alarm_time(hass, config)
-        if alarm is None:
-            return None
-        hour, minute = alarm
-        return ha_event.async_track_time_change(
-            hass,
-            callback,
-            hour=hour,
-            minute=minute,
-            second=0,
-        )
+        if alarm is not None:
+            hour, minute = alarm
+            unsub_alarm = ha_event.async_track_time_change(
+                hass,
+                callback,
+                hour=hour,
+                minute=minute,
+                second=0,
+            )
+            if preload_callback is not None:
+                preload = preload_alarm_time(hass, config)
+                if preload is not None:
+                    ph, pm = preload
+                    # Avoid double-registering the same minute (offset 0 or 1440).
+                    if (ph, pm) != (hour, minute):
+                        unsub_preload = ha_event.async_track_time_change(
+                            hass,
+                            preload_callback,
+                            hour=ph,
+                            minute=pm,
+                            second=0,
+                        )
+        return unsub_alarm, unsub_preload
 
-    unsub_time = _arm()
+    unsub_time, unsub_preload = _arm()
     unsub_state = None
 
     if time_entity:
 
         def _on_state_change(event) -> None:
-            nonlocal unsub_time
+            nonlocal unsub_time, unsub_preload
             if unsub_time is not None:
                 unsub_time()
-            unsub_time = _arm()
+            if unsub_preload is not None:
+                unsub_preload()
+            unsub_time, unsub_preload = _arm()
             if on_rearm is not None:
                 hass.async_create_task(on_rearm())
 
@@ -261,6 +313,8 @@ def async_setup_scheduler(
     def async_unsub() -> None:
         if unsub_time is not None:
             unsub_time()
+        if unsub_preload is not None:
+            unsub_preload()
         if unsub_state is not None:
             unsub_state()
 

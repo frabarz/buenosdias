@@ -25,6 +25,7 @@ from .const import (
     CONF_MODEL,
     CONF_OPENAI,
     CONF_PERSONA,
+    CONF_PRELOAD_MINUTES,
     CONF_RESTORE_VOLUME,
     CONF_RSS,
     CONF_SCHEDULE,
@@ -158,6 +159,10 @@ SCHEDULE_SCHEMA = vol.Schema(
             vol.Length(min=0),
         ),
         vol.Optional(CONF_SKIP_IF_EMITTED, default=True): bool,
+        vol.Optional(CONF_PRELOAD_MINUTES, default=0): vol.All(
+            vol.Coerce(int),
+            vol.Range(min=0, max=60),
+        ),
     },
     extra=vol.ALLOW_EXTRA,
 )
